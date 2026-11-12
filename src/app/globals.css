@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-inter: var(--font-inter, Inter, system-ui, sans-serif);
+  
+  /* Tokens de diseño para re-skinning posterior */
+  --color-canvas: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f4f4f5;
+  --color-foreground: #09090b;
+  --color-foreground-muted: #71717a;
+  
+  --border-width: 1.5px;
+  --color-border: #e4e4e7;
+  --color-border-strong: #09090b;
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter);
+  background-color: var(--color-canvas);
+  color: var(--color-foreground);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Clases utilitarias con bordes de 1.5px y radios consistentes */
+.wf-box {
+  border: 1.5px solid #09090b;
+  border-radius: 12px;
+}
+
+.wf-box-subtle {
+  border: 1.5px solid #e4e4e7;
+  border-radius: 12px;
+}
+
+.wf-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #ffffff;
+  background-color: #09090b;
+  border-radius: 12px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wf-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.wf-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.wf-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #09090b;
+  background-color: #ffffff;
+  border: 1.5px solid #09090b;
+  border-radius: 12px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wf-btn-outline:active {
+  transform: scale(0.98);
+  background-color: #f4f4f5;
+}
+
+.wf-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: #09090b;
+  background-color: #ffffff;
+  border: 1.5px solid #e4e4e7;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.wf-input:focus {
+  border-color: #09090b;
+}
+
+.wf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  min-height: 38px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1.5px solid #e4e4e7;
+  background-color: #ffffff;
+  color: #09090b;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wf-chip:active {
+  transform: scale(0.97);
+}
+
+.wf-chip.active {
+  background-color: #09090b;
+  color: #ffffff;
+  border-color: #09090b;
 }
