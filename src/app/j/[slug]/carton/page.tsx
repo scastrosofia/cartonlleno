@@ -34,7 +34,8 @@ function MiCartonEnVivoContent() {
   const [jugadores, setJugadores] = useState<Jugador[]>([]);
   const [carton, setCarton] = useState<Carton | null>(null);
   const [allCartones, setAllCartones] = useState<Carton[]>([]);
-  const [activeTab, setActiveTab] = useState<'mio' | 'apadrinado'>('mio');
+  const [activeCartonIdx, setActiveCartonIdx] = useState(0);
+  const [deviceUid, setDeviceUid] = useState<string>('');
   const [notifVictoria, setNotifVictoria] = useState<{ nombre: string; tipo: string; hora: string } | null>(null);
 
   // Inicializar juntada y jugador local
@@ -50,7 +51,6 @@ function MiCartonEnVivoContent() {
 
       const session = getLocalPlayerSession(found.id);
       if (!session) {
-        // No tiene jugador aún, enviar a unirse
         router.replace(`/j/${found.slug}`);
         return;
       }
@@ -59,6 +59,13 @@ function MiCartonEnVivoContent() {
     }
     init();
   }, [slug, router]);
+
+  // Cargar UID de dispositivo para identificar cartones apadrinados
+  useEffect(() => {
+    import('@/lib/firebase/auth').then(({ getDeviceId }) => {
+      getDeviceId().then(setDeviceUid);
+    });
+  }, []);
 
   // Suscripción en tiempo real a la juntada, jugadores y cartón
   useEffect(() => {
@@ -69,7 +76,6 @@ function MiCartonEnVivoContent() {
     const unsubJ = subscribeToJuntada(juntada.id, (updated) => {
       if (updated) {
         setJuntada(updated);
-        // Si alguien cantó victoria, mostrar aviso
         if (updated.ganadorLleno) {
           setNotifVictoria({
             nombre: updated.ganadorLleno.nombre,
@@ -106,50 +112,72 @@ function MiCartonEnVivoContent() {
     };
   }, [juntada?.id]);
 
+  // Cartones que lleva este dispositivo (propio + apadrinados)
+  const misCartones = useMemo(() => {
+    if (!carton) return [];
+    const list: Carton[] = [carton];
+
+    // Buscar si hay jugadores apadrinados que le correspondan a este dispositivo
+    const apadrinadosMios = jugadores.filter(
+      (j) => j.tipo === 'apadrinado' && (j.padrinoUid === deviceUid || !j.padrinoUid)
+    );
+
+    apadrinadosMios.forEach((ap) => {
+      const c = allCartones.find((card) => card.jugadorId === ap.id);
+      if (c && !list.some((item) => item.id === c.id) && list.length < 3) {
+        list.push(c);
+      }
+    });
+
+    return list;
+  }, [carton, jugadores, allCartones, deviceUid]);
+
+  const cartonActual = misCartones[activeCartonIdx] || carton;
+
   // Marcado y desmarcado de casillero
-  const handleToggleCell = async (index: number) => {
-    if (!juntada || !carton) return;
-    // Efecto háptico sutil si el navegador lo soporta
+  const handleToggleCell = async (index: number, targetCartonId?: string) => {
+    if (!juntada || !cartonActual) return;
+    const cId = targetCartonId || cartonActual.id;
+
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try { navigator.vibrate(35); } catch {}
     }
 
     try {
-      const nuevosMarcados = await toggleMarcarCasillero(juntada.id, carton.id, index);
-      setCarton((prev) => (prev ? { ...prev, marcados: nuevosMarcados } : null));
+      await toggleMarcarCasillero(juntada.id, cId, index);
     } catch (err) {
       console.error('Error al marcar casillero:', err);
     }
   };
 
-  // Cálculo de reglas
+  // Reglas del cartón actualmente visible
   const tieneLinea = useMemo(() => {
-    if (!carton || !juntada) return false;
-    return checkLinea(carton.marcados, juntada.formato);
-  }, [carton, juntada]);
+    if (!cartonActual || !juntada) return false;
+    return checkLinea(cartonActual.marcados, juntada.formato);
+  }, [cartonActual, juntada]);
 
   const tieneLleno = useMemo(() => {
-    if (!carton || !juntada) return false;
-    return checkCartonLleno(carton.marcados, juntada.formato);
-  }, [carton, juntada]);
+    if (!cartonActual || !juntada) return false;
+    return checkCartonLleno(cartonActual.marcados, juntada.formato);
+  }, [cartonActual, juntada]);
 
   const faltantesLinea = useMemo(() => {
-    if (!carton || !juntada) return 0;
-    return calcularFaltantesParaLinea(carton.marcados, juntada.formato);
-  }, [carton, juntada]);
+    if (!cartonActual || !juntada) return 0;
+    return calcularFaltantesParaLinea(cartonActual.marcados, juntada.formato);
+  }, [cartonActual, juntada]);
 
   const totalCasilleros = juntada ? getTotalCasilleros(juntada.formato) : 16;
-  const cantidadMarcados = carton ? carton.marcados.length : 0;
+  const cantidadMarcados = cartonActual ? cartonActual.marcados.length : 0;
 
-  // Lógica de alerta social: si 2 o más jugadores marcaron un clásico que nosotros no tenemos marcado
+  // Lógica de alerta social considerando todos los cartones que lleva este celu
   const alertaSocial = useMemo(() => {
-    if (!carton || allCartones.length < 2) return null;
+    if (!cartonActual || allCartones.length < 2) return null;
 
-    const marcadosMios = new Set(carton.marcados);
+    const idsMios = new Set(misCartones.map((c) => c.id));
     const conteoPorClasico: Record<string, { texto: string; count: number }> = {};
 
     allCartones.forEach((c) => {
-      if (c.id === carton.id) return;
+      if (idsMios.has(c.id)) return;
       c.marcados.forEach((idx) => {
         const item = c.casilleros[idx];
         if (item && !item.esLibre) {
@@ -161,24 +189,39 @@ function MiCartonEnVivoContent() {
       });
     });
 
-    // Buscar si tenemos en nuestro cartón algún clásico que otros marcaron (>= 2 veces) y nosotros no
-    for (let i = 0; i < carton.casilleros.length; i++) {
-      const miCasillero = carton.casilleros[i];
-      if (!marcadosMios.has(i) && !miCasillero.esLibre) {
-        const match = conteoPorClasico[miCasillero.texto];
-        if (match && match.count >= 2) {
+    // Revisar si en mis cartones alguno tiene ese clásico sin marcar
+    for (const [texto, info] of Object.entries(conteoPorClasico)) {
+      if (info.count >= 2) {
+        const cartonesConEseClasicoSinMarcar: { cartonId: string; index: number }[] = [];
+
+        misCartones.forEach((c) => {
+          const mSet = new Set(c.marcados);
+          c.casilleros.forEach((cas, idx) => {
+            if (cas.texto.toLowerCase() === texto.toLowerCase() && !mSet.has(idx) && !cas.esLibre) {
+              cartonesConEseClasicoSinMarcar.push({ cartonId: c.id, index: idx });
+            }
+          });
+        });
+
+        if (cartonesConEseClasicoSinMarcar.length > 0) {
           return {
-            index: i,
-            id: miCasillero.id,
-            texto: miCasillero.texto,
-            personas: match.count + 1,
+            texto,
+            personas: info.count + 1,
+            matches: cartonesConEseClasicoSinMarcar,
           };
         }
       }
     }
 
     return null;
-  }, [carton, allCartones]);
+  }, [cartonActual, allCartones, misCartones]);
+
+  const handleMarcarSocial = async () => {
+    if (!alertaSocial || !juntada) return;
+    for (const match of alertaSocial.matches) {
+      await toggleMarcarCasillero(juntada.id, match.cartonId, match.index);
+    }
+  };
 
   const handleCantarLinea = async () => {
     if (!juntada || !carton || !tieneLinea) return;
@@ -249,28 +292,22 @@ function MiCartonEnVivoContent() {
             </div>
           </div>
 
-          {/* Pestañas de cartones (Mi cartón / Cartón apadrinado) */}
-          <div className="flex gap-2 p-1 bg-neutral-100 rounded-xl mb-3 border border-neutral-200">
-            <button
-              type="button"
-              onClick={() => setActiveTab('mio')}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                activeTab === 'mio'
-                  ? 'bg-white text-neutral-950 shadow-2xs border border-neutral-300'
-                  : 'text-neutral-500 hover:text-neutral-900'
-              }`}
-            >
-              Mi cartón
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                alert('La gestión de cartones de invitados sin celu (ej: La Abu) se habilita en la Fase 3.');
-              }}
-              className="flex-1 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-600 rounded-lg"
-            >
-              + Agregar otro
-            </button>
+          {/* Pestañas de cartones (Mi cartón / Cartón de La Abu) */}
+          <div className="flex gap-1.5 p-1 bg-neutral-100 rounded-xl mb-3 border border-neutral-200 overflow-x-auto">
+            {misCartones.map((c, idx) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setActiveCartonIdx(idx)}
+                className={`flex-1 min-w-[100px] py-2 text-xs font-bold rounded-lg transition-all truncate px-2.5 ${
+                  activeCartonIdx === idx
+                    ? 'bg-white text-neutral-950 shadow-2xs border border-neutral-300'
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
+              >
+                {idx === 0 ? 'Mi cartón' : `Cartón de ${c.jugadorNombre}`}
+              </button>
+            ))}
           </div>
 
           {/* Notificación de ganador en vivo (si alguien cantó línea o lleno) */}
@@ -294,19 +331,21 @@ function MiCartonEnVivoContent() {
             </div>
           )}
 
-          {/* Alerta social interactiva */}
+          {/* Alerta social interactiva con soporte para 'En los 2' */}
           {alertaSocial && (
             <SocialAlert
               mensaje={`${alertaSocial.personas} personas marcaron: ${alertaSocial.texto}`}
-              botonTexto="Marcar"
-              onAction={() => handleToggleCell(alertaSocial.index)}
+              botonTexto={alertaSocial.matches.length > 1 ? `En los ${alertaSocial.matches.length}` : 'Marcar'}
+              onAction={handleMarcarSocial}
             />
           )}
 
           {/* Si no hay alerta social natural, mostramos sutilmente el estado */}
           {!alertaSocial && !notifVictoria && (
             <div className="text-[11px] text-neutral-400 font-medium text-center mb-2">
-              Tocá cualquier casillero cuando ocurra en la juntada
+              {misCartones.length > 1
+                ? `Llevás ${misCartones.length} cartones en este celu. Podés alternar en las pestañas arriba.`
+                : 'Tocá cualquier casillero cuando ocurra en la juntada'}
             </div>
           )}
         </div>
@@ -314,11 +353,10 @@ function MiCartonEnVivoContent() {
         {/* Grilla central de Bingo */}
         <div className="w-full my-auto py-2">
           <BingoGrid
-            casilleros={carton.casilleros}
-            marcados={carton.marcados}
+            casilleros={cartonActual.casilleros}
+            marcados={cartonActual.marcados}
             formato={juntada.formato}
-            highlightedClasicoId={alertaSocial?.id}
-            onToggleCell={handleToggleCell}
+            onToggleCell={(idx) => handleToggleCell(idx, cartonActual.id)}
           />
         </div>
 

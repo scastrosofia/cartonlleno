@@ -16,8 +16,9 @@ import {
   repartirCartones,
 } from '@/lib/firebase/service';
 import { getDeviceId, saveLocalPlayerSession } from '@/lib/firebase/auth';
-import { Juntada, Jugador, Clasico } from '@/types';
+import { Juntada, Jugador, Clasico, TipoJugador } from '@/types';
 import { getTotalCasilleros } from '@/lib/bingo/rules';
+import { AgregarJugadorSinCeluModal } from '@/components/modals/AgregarJugadorSinCeluModal';
 
 export default function InvitarPaso3Page() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function InvitarPaso3Page() {
   const [copied, setCopied] = useState(false);
   const [repartiendo, setRepartiendo] = useState(false);
   const [originUrl, setOriginUrl] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -153,11 +155,20 @@ export default function InvitarPaso3Page() {
     setRepartiendo(true);
     try {
       await repartirCartones(juntada.id);
-      router.push(`/j/${juntada.slug}/carton`);
+      if (juntada.modo === 'tradicional') {
+        router.push(`/j/${juntada.slug}/descargar`);
+      } else {
+        router.push(`/j/${juntada.slug}/carton`);
+      }
     } catch (err) {
       console.error('Error al repartir cartones:', err);
       setRepartiendo(false);
     }
+  };
+
+  const handleAddJugadorSinCelu = async (nombre: string, tipo: TipoJugador, padrinoUid?: string | null) => {
+    if (!juntada) return;
+    await addJugador(juntada.id, nombre, null, tipo, padrinoUid);
   };
 
   const totalRequerido = juntada ? getTotalCasilleros(juntada.formato) : 16;
@@ -283,9 +294,7 @@ export default function InvitarPaso3Page() {
           {/* Botón de jugador sin celu (prepara fase 3) */}
           <button
             type="button"
-            onClick={() => {
-              alert('En la Fase 3 vas a poder agregar participantes sin celular o imprimibles.');
-            }}
+            onClick={() => setIsModalOpen(true)}
             className="w-full min-h-[46px] rounded-xl border-[1.5px] border-dashed border-neutral-400 bg-white text-xs font-bold text-neutral-800 flex items-center justify-center gap-2 hover:border-neutral-700 active:bg-neutral-50 mb-3"
           >
             <Plus className="w-4 h-4 stroke-[2]" />
@@ -319,6 +328,14 @@ export default function InvitarPaso3Page() {
           </span>
         </div>
       </div>
+
+      {/* Modal 4b: Agregar jugador sin celu */}
+      <AgregarJugadorSinCeluModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        jugadoresExistentes={jugadores}
+        onAddJugador={handleAddJugadorSinCelu}
+      />
     </MobileContainer>
   );
 }
