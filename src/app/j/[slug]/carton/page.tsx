@@ -190,6 +190,7 @@ function MiCartonEnVivoContent() {
     });
 
     await cantarVictoria(juntada.id, carton.id, carton.jugadorId, carton.jugadorNombre, 'linea');
+    router.push(`/j/${juntada.slug}/victoria?tipo=linea`);
   };
 
   const handleCantarLleno = async () => {
@@ -202,6 +203,7 @@ function MiCartonEnVivoContent() {
     });
 
     await cantarVictoria(juntada.id, carton.id, carton.jugadorId, carton.jugadorNombre, 'lleno');
+    router.push(`/j/${juntada.slug}/victoria?tipo=lleno`);
   };
 
   // Iniciales del jugador para el avatar
@@ -273,13 +275,22 @@ function MiCartonEnVivoContent() {
 
           {/* Notificación de ganador en vivo (si alguien cantó línea o lleno) */}
           {notifVictoria && (
-            <div className="w-full bg-neutral-900 text-white rounded-xl p-3 flex items-center gap-2.5 mb-3 animate-bounce">
-              <PartyPopper className="w-5 h-5 text-yellow-400 shrink-0" />
-              <div className="text-xs leading-tight">
-                <span className="font-bold">{notifVictoria.nombre}</span> cantó{' '}
-                <span className="font-extrabold underline">{notifVictoria.tipo}</span> a las{' '}
-                {notifVictoria.hora}
+            <div className="w-full bg-neutral-900 text-white rounded-xl p-3 flex items-center justify-between gap-2.5 mb-3 animate-bounce">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PartyPopper className="w-5 h-5 text-yellow-400 shrink-0" />
+                <div className="text-xs leading-tight truncate">
+                  <span className="font-bold">{notifVictoria.nombre}</span> cantó{' '}
+                  <span className="font-extrabold underline">{notifVictoria.tipo}</span> a las{' '}
+                  {notifVictoria.hora}
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/j/${juntada.slug}/victoria`)}
+                className="shrink-0 bg-white text-neutral-900 text-[11px] font-bold px-2.5 py-1 rounded-lg active:scale-95 transition-transform"
+              >
+                Ver festejo
+              </button>
             </div>
           )}
 

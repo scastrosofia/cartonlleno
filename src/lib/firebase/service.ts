@@ -18,7 +18,10 @@ import { prepararPoolClasicos, generarCarton } from '../bingo/generator';
 import { getBancoCompletoParaTipo } from '@/data/bancoClasicos';
 
 // --- BROADCAST CHANNEL PARA MODO LOCAL REACTIVO MULTI-TAB ---
-const localChannel = typeof window !== 'undefined' ? new BroadcastChannel('carton_lleno_bus') : null;
+const localChannel =
+  typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined'
+    ? new BroadcastChannel('carton_lleno_bus')
+    : null;
 
 function broadcastLocalEvent(type: string, payload: any) {
   if (localChannel) {
