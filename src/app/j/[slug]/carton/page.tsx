@@ -7,6 +7,7 @@ import { BingoGrid } from '@/components/bingo/BingoGrid';
 import { SocialAlert } from '@/components/bingo/SocialAlert';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import {
   getJuntadaBySlug,
   subscribeToJuntada,
@@ -15,8 +16,10 @@ import {
   subscribeToAllCartones,
   toggleMarcarCasillero,
   cantarVictoria,
+  obtenerOGenerarCarton,
+  addJugador,
 } from '@/lib/firebase/service';
-import { getLocalPlayerSession } from '@/lib/firebase/auth';
+import { getDeviceId, getLocalPlayerSession, saveLocalPlayerSession } from '@/lib/firebase/auth';
 import { checkLinea, checkCartonLleno, calcularFaltantesParaLinea, getTotalCasilleros } from '@/lib/bingo/rules';
 import { Juntada, Jugador, Carton } from '@/types';
 import confetti from 'canvas-confetti';
@@ -38,6 +41,11 @@ function MiCartonEnVivoContent() {
   const [deviceUid, setDeviceUid] = useState<string>('');
   const [notifVictoria, setNotifVictoria] = useState<{ nombre: string; tipo: string; hora: string } | null>(null);
 
+  // Estados para ingreso directo si abrió el link del cartón sin sesión previa
+  const [sinSesion, setSinSesion] = useState(false);
+  const [nombreIngreso, setNombreIngreso] = useState('');
+  const [ingresando, setIngresando] = useState(false);
+
   // Inicializar juntada y jugador local
   useEffect(() => {
     async function init() {
@@ -51,8 +59,23 @@ function MiCartonEnVivoContent() {
 
       const session = getLocalPlayerSession(found.id);
       if (!session) {
+        setSinSesion(true);
+        setLoading(false);
+        return;
+      }
+
+      // Si el juego todavía no se inició (está en cargando), ir a la sala de espera
+      if (found.estado !== 'jugando') {
         router.replace(`/j/${found.slug}`);
         return;
+      }
+
+      // Intentar obtener o generar el cartón inmediatamente
+      try {
+        const c = await obtenerOGenerarCarton(found, session.jugadorId, session.nombre);
+        if (c) setCarton(c);
+      } catch (err) {
+        console.warn('Error al obtener o generar cartón inicial:', err);
       }
 
       setLoading(false);
@@ -62,9 +85,7 @@ function MiCartonEnVivoContent() {
 
   // Cargar UID de dispositivo para identificar cartones apadrinados
   useEffect(() => {
-    import('@/lib/firebase/auth').then(({ getDeviceId }) => {
-      getDeviceId().then(setDeviceUid);
-    });
+    getDeviceId().then(setDeviceUid);
   }, []);
 
   // Suscripción en tiempo real a la juntada, jugadores y cartón
@@ -96,8 +117,14 @@ function MiCartonEnVivoContent() {
       setJugadores(list);
     });
 
-    const unsubCarton = subscribeToCarton(juntada.id, session.jugadorId, (c) => {
-      setCarton(c);
+    const unsubCarton = subscribeToCarton(juntada.id, session.jugadorId, async (c) => {
+      if (c) {
+        setCarton(c);
+      } else if (juntada.estado === 'jugando') {
+        // Si no vino en el snapshot pero la juntada está jugando, generarlo al vuelo
+        const nuevo = await obtenerOGenerarCarton(juntada, session.jugadorId, session.nombre);
+        if (nuevo) setCarton(nuevo);
+      }
     });
 
     const unsubAll = subscribeToAllCartones(juntada.id, (list) => {
@@ -249,6 +276,35 @@ function MiCartonEnVivoContent() {
     router.push(`/j/${juntada.slug}/victoria?tipo=lleno`);
   };
 
+  const handleIngresoDirecto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombreIngreso.trim() || !juntada) return;
+    setIngresando(true);
+    try {
+      const uid = await getDeviceId();
+      const nuevoJugador = await addJugador(juntada.id, nombreIngreso.trim(), uid, 'celu');
+      saveLocalPlayerSession(juntada.id, nuevoJugador.id, nuevoJugador.nombre);
+      const c = await obtenerOGenerarCarton(juntada, nuevoJugador.id, nuevoJugador.nombre);
+      if (c) setCarton(c);
+      setSinSesion(false);
+    } catch (err) {
+      console.error('Error al ingresar directamente al cartón:', err);
+    } finally {
+      setIngresando(false);
+    }
+  };
+
+  const handleForzarRecarga = async () => {
+    if (!juntada) return;
+    const session = getLocalPlayerSession(juntada.id);
+    if (session) {
+      const c = await obtenerOGenerarCarton(juntada, session.jugadorId, session.nombre);
+      if (c) setCarton(c);
+    } else {
+      setSinSesion(true);
+    }
+  };
+
   // Iniciales del jugador para el avatar
   const initials = carton?.jugadorNombre
     ? carton.jugadorNombre
@@ -259,12 +315,75 @@ function MiCartonEnVivoContent() {
         .toUpperCase()
     : 'YO';
 
+  if (!loading && !juntada) {
+    return (
+      <MobileContainer>
+        <div className="flex flex-col items-center justify-center flex-1 py-12 text-center px-4">
+          <p className="font-serif text-lg font-bold text-neutral-900 mb-2 lowercase">
+            juntada no encontrada
+          </p>
+          <p className="text-xs text-neutral-500 mb-6 lowercase">
+            revisá el enlace o pedile el link al organizador.
+          </p>
+          <Button fullWidth onClick={() => router.push('/')}>
+            ir al inicio
+          </Button>
+        </div>
+      </MobileContainer>
+    );
+  }
+
+  if (sinSesion && juntada) {
+    return (
+      <MobileContainer>
+        <div className="flex flex-col flex-1 justify-center py-8">
+          <div className="text-center mb-6">
+            <span className="text-xs font-medium text-neutral-500 lowercase block mb-1">
+              partida en vivo de
+            </span>
+            <h1 className="font-serif text-2xl font-bold text-neutral-900">
+              {juntada.nombre}
+            </h1>
+            <p className="text-xs text-neutral-500 mt-1 lowercase">
+              ingresá tu nombre para recibir tu cartón
+            </p>
+          </div>
+          <form onSubmit={handleIngresoDirecto} className="flex flex-col gap-4">
+            <div>
+              <label className="text-xs font-bold text-neutral-900 block mb-1.5 lowercase">
+                tu nombre o apodo
+              </label>
+              <Input
+                placeholder="ej: federico"
+                value={nombreIngreso}
+                onChange={(e) => setNombreIngreso(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <Button size="lg" fullWidth type="submit" disabled={!nombreIngreso.trim() || ingresando}>
+              {ingresando ? 'entrando...' : 'ver mi cartón'}
+            </Button>
+          </form>
+        </div>
+      </MobileContainer>
+    );
+  }
+
   if (loading || !juntada || !carton) {
     return (
       <MobileContainer>
-        <div className="flex flex-col items-center justify-center flex-1 py-12">
-          <div className="w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-sm font-semibold text-neutral-700">Preparando tu cartón...</p>
+        <div className="flex flex-col items-center justify-center flex-1 py-12 text-center px-4">
+          <div className="w-8 h-8 border-2 border-[#E52320] border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-sm font-semibold text-neutral-700 lowercase mb-2">
+            preparando tu cartón...
+          </p>
+          <button
+            type="button"
+            onClick={handleForzarRecarga}
+            className="text-xs text-[#E52320] font-semibold underline underline-offset-4 mt-3 hover:text-[#b51816] lowercase"
+          >
+            ¿tarda en cargar? tocá acá para generar tu cartón
+          </button>
         </div>
       </MobileContainer>
     );

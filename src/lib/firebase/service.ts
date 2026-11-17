@@ -447,6 +447,22 @@ export async function repartirCartones(juntadaId: string): Promise<Carton[]> {
 
   if (!juntada) throw new Error('Juntada no encontrada');
 
+  if (jugadores.length === 0) {
+    const hostJugador: Jugador = {
+      id: `juga_${Date.now()}_host`,
+      nombre: 'Organizador',
+      uid: juntada.hostUid,
+      tipo: 'celu',
+      creadoEn: Date.now(),
+    };
+    jugadores.push(hostJugador);
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'juntadas', juntadaId, 'jugadores', hostJugador.id), hostJugador);
+      } catch {}
+    }
+  }
+
   const { pool } = prepararPoolClasicos(clasicos, juntada.formato, juntada.tipo);
 
   const cartones: Carton[] = [];
@@ -463,24 +479,100 @@ export async function repartirCartones(juntadaId: string): Promise<Carton[]> {
     cartones.push(carton);
   });
 
+  // Guardar siempre en localDB
+  const local = getLocalDB();
+  local.cartones[juntadaId] = cartones;
+  if (local.juntadas[juntadaId]) {
+    local.juntadas[juntadaId].estado = 'jugando';
+  }
+  saveLocalDB(local);
+  broadcastLocalEvent('CARTONES_UPDATED', { juntadaId, cartones });
+  broadcastLocalEvent('JUNTADA_UPDATED', local.juntadas[juntadaId]);
+
   if (isFirebaseConfigured && db) {
-    // Guardamos cartones y pasamos juntada a 'jugando'
-    for (const carton of cartones) {
-      await setDoc(doc(db, 'juntadas', juntadaId, 'cartones', carton.id), carton);
+    try {
+      for (const carton of cartones) {
+        await setDoc(doc(db, 'juntadas', juntadaId, 'cartones', carton.id), carton);
+      }
+      await updateDoc(doc(db, 'juntadas', juntadaId), { estado: 'jugando' });
+    } catch (err) {
+      console.warn('Error al guardar cartones en Firestore:', err);
     }
-    await updateDoc(doc(db, 'juntadas', juntadaId), { estado: 'jugando' });
-  } else {
-    const local = getLocalDB();
-    local.cartones[juntadaId] = cartones;
-    if (local.juntadas[juntadaId]) {
-      local.juntadas[juntadaId].estado = 'jugando';
-    }
-    saveLocalDB(local);
-    broadcastLocalEvent('CARTONES_UPDATED', { juntadaId, cartones });
-    broadcastLocalEvent('JUNTADA_UPDATED', local.juntadas[juntadaId]);
   }
 
   return cartones;
+}
+
+/**
+ * Obtiene el cartón asignado a un jugador o lo genera automáticamente al vuelo si aún no existe
+ */
+export async function obtenerOGenerarCarton(
+  juntada: Juntada,
+  jugadorId: string,
+  jugadorNombre: string
+): Promise<Carton> {
+  const cartonId = `carton_${jugadorId}`;
+
+  // 1. Verificar si ya existe en Firestore
+  if (isFirebaseConfigured && db) {
+    try {
+      const docRef = doc(db, 'juntadas', juntada.id, 'cartones', cartonId);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        return snap.data() as Carton;
+      }
+    } catch (err) {
+      console.warn('Error al buscar cartón en Firestore:', err);
+    }
+  }
+
+  // 2. Verificar si existe en localDB
+  const local = getLocalDB();
+  const list = local.cartones[juntada.id] || [];
+  const existing = list.find(c => c.jugadorId === jugadorId || c.id === cartonId);
+  if (existing) return existing;
+
+  // 3. Si no existe, obtener clásicos y generar cartón al vuelo
+  let clasicos: Clasico[] = [];
+  if (isFirebaseConfigured && db) {
+    try {
+      const cSnap = await getDocs(collection(db, 'juntadas', juntada.id, 'clasicos'));
+      clasicos = cSnap.docs.map(d => d.data() as Clasico);
+    } catch {}
+  }
+  if (clasicos.length === 0) {
+    clasicos = local.clasicos[juntada.id] || [];
+  }
+
+  const { pool } = prepararPoolClasicos(clasicos, juntada.formato, juntada.tipo);
+  const nuevoCarton = generarCarton(
+    juntada.id,
+    jugadorId,
+    jugadorNombre,
+    list.length + 1,
+    pool,
+    juntada.formato,
+    list
+  );
+
+  // Guardar en localDB y Firestore
+  if (!local.cartones[juntada.id]) local.cartones[juntada.id] = [];
+  local.cartones[juntada.id].push(nuevoCarton);
+  saveLocalDB(local);
+  broadcastLocalEvent('CARTONES_UPDATED', { juntadaId: juntada.id, cartones: local.cartones[juntada.id] });
+
+  if (isFirebaseConfigured && db) {
+    try {
+      await setDoc(doc(db, 'juntadas', juntada.id, 'cartones', nuevoCarton.id), nuevoCarton);
+      if (juntada.estado !== 'jugando') {
+        await updateDoc(doc(db, 'juntadas', juntada.id), { estado: 'jugando' });
+      }
+    } catch (err) {
+      console.warn('Error al guardar nuevo cartón en Firestore:', err);
+    }
+  }
+
+  return nuevoCarton;
 }
 
 // ----------------------------------------------------------------------
