@@ -10,6 +10,7 @@ export interface EstadisticasActa {
   premio: string;
   clasicoNoPasoTexto: string;
   remateNoPaso: string;
+  ganadoresLinea?: { nombre: string; hora: string; numeroLinea?: number }[];
 }
 
 const REMATES_HUMOR: Record<string, string> = {
@@ -99,6 +100,8 @@ export function calcularEstadisticasActa(
     ? 'Cartón Lleno'
     : 'Línea';
 
+  const ganadoresLinea = juntada.ganadoresLinea || (juntada.ganadorLinea ? [juntada.ganadorLinea] : []);
+
   return {
     totalClasicosPool,
     clasicosCumplidosCount: cumplidos.length,
@@ -109,5 +112,6 @@ export function calcularEstadisticasActa(
     premio: juntada.premio || 'No lavar los platos',
     clasicoNoPasoTexto,
     remateNoPaso,
+    ganadoresLinea,
   };
 }

@@ -194,11 +194,20 @@ function ActaContent() {
 
               <div className="p-3 bg-red-50/50 rounded-2xl border border-red-100 text-center mb-3">
                 <span className="text-[10px] font-medium text-neutral-500 uppercase block mb-0.5">
-                  ganó
+                  {juntada.ganadorLleno ? 'cartón lleno (bingo)' : 'ganador'}
                 </span>
                 <span className="font-serif text-xl font-bold text-neutral-950 block leading-tight">
                   {stats.ganadorNombre}
                 </span>
+                {stats.ganadoresLinea && stats.ganadoresLinea.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-red-100 flex flex-wrap justify-center gap-1.5 text-[10px] text-neutral-600">
+                    {stats.ganadoresLinea.map((gl, i) => (
+                      <span key={i} className="inline-block bg-white px-2 py-0.5 rounded-md border border-red-100 font-medium">
+                        {gl.numeroLinea ? `${gl.numeroLinea}ª línea` : 'línea'}: <strong>{gl.nombre}</strong>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200 text-center mb-3">

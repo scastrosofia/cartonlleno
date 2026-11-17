@@ -42,6 +42,7 @@ export interface GanadorInfo {
   nombre: string;
   hora: string;
   tipo: 'linea' | 'lleno';
+  numeroLinea?: number; // 1, 2 o 3 para las 3 líneas
 }
 
 export interface Juntada {
@@ -58,5 +59,6 @@ export interface Juntada {
   estado: EstadoJuntada;
   creadaEn: number;
   ganadorLinea?: GanadorInfo | null;
+  ganadoresLinea?: GanadorInfo[]; // Lista de hasta 3 ganadores de línea
   ganadorLleno?: GanadorInfo | null;
 }

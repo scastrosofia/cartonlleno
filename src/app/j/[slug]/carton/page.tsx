@@ -103,6 +103,14 @@ function MiCartonEnVivoContent() {
             tipo: '¡CARTÓN LLENO!',
             hora: updated.ganadorLleno.hora,
           });
+        } else if (updated.ganadoresLinea && updated.ganadoresLinea.length > 0) {
+          const ultimo = updated.ganadoresLinea[updated.ganadoresLinea.length - 1];
+          const ord = ultimo.numeroLinea === 1 ? '1ª' : ultimo.numeroLinea === 2 ? '2ª' : '3ª';
+          setNotifVictoria({
+            nombre: ultimo.nombre,
+            tipo: `¡${ord} LÍNEA!`,
+            hora: ultimo.hora,
+          });
         } else if (updated.ganadorLinea) {
           setNotifVictoria({
             nombre: updated.ganadorLinea.nombre,
@@ -250,8 +258,15 @@ function MiCartonEnVivoContent() {
     }
   };
 
+  const ganadoresLinea = useMemo(() => {
+    return juntada?.ganadoresLinea || (juntada?.ganadorLinea ? [juntada.ganadorLinea] : []);
+  }, [juntada]);
+
+  const yaGanoLineaEsteCarton = Boolean(cartonActual?.ganoLineaAt);
+  const quedanLineas = ganadoresLinea.length < 3;
+
   const handleCantarLinea = async () => {
-    if (!juntada || !carton || !tieneLinea) return;
+    if (!juntada || !carton || !tieneLinea || !quedanLineas) return;
 
     confetti({
       particleCount: 80,
@@ -259,8 +274,9 @@ function MiCartonEnVivoContent() {
       origin: { y: 0.6 },
     });
 
-    await cantarVictoria(juntada.id, carton.id, carton.jugadorId, carton.jugadorNombre, 'linea');
-    router.push(`/j/${juntada.slug}/victoria?tipo=linea`);
+    const res = await cantarVictoria(juntada.id, carton.id, carton.jugadorId, carton.jugadorNombre, 'linea');
+    const num = res?.numeroLinea || (ganadoresLinea.length + 1);
+    router.push(`/j/${juntada.slug}/victoria?tipo=linea&num=${num}`);
   };
 
   const handleCantarLleno = async () => {
@@ -488,9 +504,13 @@ function MiCartonEnVivoContent() {
             rightLabel={
               tieneLleno
                 ? '¡cartón completado!'
-                : tieneLinea
-                ? '¡línea conseguida!'
-                : `te falta ${faltantesLinea} para línea`
+                : yaGanoLineaEsteCarton
+                ? '¡línea conseguida! a por el bingo'
+                : tieneLinea && quedanLineas
+                ? '¡línea conseguida! tocala para cantar'
+                : quedanLineas
+                ? `te falta ${faltantesLinea} para línea (${ganadoresLinea.length}/3)`
+                : `te faltan ${totalCasilleros - cantidadMarcados} para bingo`
             }
           />
 
@@ -498,12 +518,20 @@ function MiCartonEnVivoContent() {
             <Button
               size="lg"
               fullWidth
-              className="bg-[#E52320] text-white shadow-lg animate-pulse"
+              className="bg-[#E52320] text-white shadow-lg animate-pulse font-extrabold tracking-wide"
               onClick={handleCantarLleno}
             >
               <Trophy className="w-5 h-5 mr-2 text-yellow-300" />
-              ¡CARTÓN LLENO!
+              ¡CARTÓN LLENO! (BINGO)
             </Button>
+          ) : yaGanoLineaEsteCarton ? (
+            <div className="w-full min-h-[50px] rounded-2xl font-bold text-xs bg-emerald-50 border border-emerald-300 text-emerald-800 flex items-center justify-center text-center px-3 shadow-2xs">
+              🎉 ¡Línea conseguida! Seguí jugando por el Cartón Lleno
+            </div>
+          ) : !quedanLineas ? (
+            <div className="w-full min-h-[50px] rounded-2xl font-bold text-xs bg-neutral-100 border border-neutral-300 text-neutral-600 flex items-center justify-center text-center px-3 shadow-2xs">
+              3 líneas cantadas · ¡a por el cartón lleno (bingo)!
+            </div>
           ) : (
             <button
               type="button"
@@ -515,7 +543,9 @@ function MiCartonEnVivoContent() {
                   : 'bg-white border-2 border-[#E52320] text-[#E52320] hover:bg-red-50/50'
               }`}
             >
-              {tieneLinea ? '🎉 ¡CANTAR LÍNEA!' : '¡LÍNEA!'}
+              {tieneLinea
+                ? `🎉 ¡CANTAR ${ganadoresLinea.length === 0 ? '1ª' : ganadoresLinea.length === 1 ? '2ª' : '3ª'} LÍNEA!`
+                : `¡LÍNEA! (${ganadoresLinea.length}/3)`}
             </button>
           )}
 

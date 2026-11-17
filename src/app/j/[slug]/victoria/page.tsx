@@ -57,14 +57,19 @@ function VictoriaContent() {
   }, []);
 
   const esLleno = tipoParam === 'lleno' || Boolean(juntada?.ganadorLleno);
+  const numParam = searchParams.get('num');
 
   const ganadorInfo = esLleno
     ? juntada?.ganadorLleno
-    : juntada?.ganadorLinea || juntada?.ganadorLleno;
+    : (juntada?.ganadoresLinea && juntada.ganadoresLinea.length > 0
+        ? (numParam ? juntada.ganadoresLinea.find(g => g.numeroLinea === Number(numParam)) : null) || juntada.ganadoresLinea[juntada.ganadoresLinea.length - 1]
+        : juntada?.ganadorLinea || juntada?.ganadorLleno);
 
   const nombreGanador = ganadorInfo?.nombre || 'Alguien de la mesa';
   const horaGanador = ganadorInfo?.hora || '00:47';
-  const tituloFestejo = esLleno ? '¡CARTÓN LLENO!' : '¡LÍNEA!';
+  const numeroLinea = ganadorInfo?.numeroLinea || (numParam ? Number(numParam) : 1);
+  const ordLinea = numeroLinea === 1 ? '1ª' : numeroLinea === 2 ? '2ª' : '3ª';
+  const tituloFestejo = esLleno ? '¡CARTÓN LLENO!' : `¡${ordLinea} LÍNEA!`;
 
   if (loading || !juntada) {
     return (
@@ -119,8 +124,20 @@ function VictoriaContent() {
 
         {/* Botones de acción */}
         <div className="flex flex-col gap-3 mt-auto pt-4">
+          {!esLleno && (
+            <Button
+              size="lg"
+              fullWidth
+              onClick={() => router.push(`/j/${juntada.slug}/carton`)}
+              className="bg-[#E52320] text-white shadow-md animate-pulse"
+            >
+              seguir jugando por el cartón lleno
+            </Button>
+          )}
+
           <Button
             size="lg"
+            variant={esLleno ? 'primary' : 'outline'}
             fullWidth
             onClick={() => router.push(`/j/${juntada.slug}/acta`)}
           >

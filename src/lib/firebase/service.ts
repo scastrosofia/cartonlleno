@@ -13,7 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
-import { Juntada, Clasico, Jugador, Carton, TipoJuntada, FormatoCarton, ModoJuego, TipoJugador } from '@/types';
+import { Juntada, Clasico, Jugador, Carton, TipoJuntada, FormatoCarton, ModoJuego, TipoJugador, GanadorInfo } from '@/types';
 import { prepararPoolClasicos, generarCarton } from '../bingo/generator';
 import { getBancoCompletoParaTipo } from '@/data/bancoClasicos';
 
@@ -750,41 +750,108 @@ export async function cantarVictoria(
   jugadorId: string,
   jugadorNombre: string,
   tipo: 'linea' | 'lleno'
-): Promise<void> {
+): Promise<GanadorInfo | null> {
   const horaNow = new Intl.DateTimeFormat('es-AR', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date());
 
-  const ganadorInfo = {
-    jugadorId,
-    nombre: jugadorNombre,
-    hora: horaNow,
-    tipo,
-  };
-
-  const updateFields = tipo === 'linea'
-    ? { ganadorLinea: ganadorInfo }
-    : { ganadorLleno: ganadorInfo, estado: 'terminada' };
-
   if (isFirebaseConfigured && db) {
-    await updateDoc(doc(db, 'juntadas', juntadaId), updateFields);
-    await updateDoc(doc(db, 'juntadas', juntadaId, 'cartones', cartonId), {
-      [tipo === 'linea' ? 'ganoLineaAt' : 'ganoLlenoAt']: horaNow,
-    });
-  } else {
-    const local = getLocalDB();
-    if (local.juntadas[juntadaId]) {
-      Object.assign(local.juntadas[juntadaId], updateFields);
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return null;
+      const juntadaData = snap.data() as Juntada;
+
+      if (tipo === 'linea') {
+        const ganadoresLineaActuales: GanadorInfo[] = juntadaData.ganadoresLinea || (juntadaData.ganadorLinea ? [juntadaData.ganadorLinea] : []);
+        if (ganadoresLineaActuales.length >= 3) {
+          return null;
+        }
+        const numeroLinea = ganadoresLineaActuales.length + 1;
+        const ganadorInfo: GanadorInfo = {
+          jugadorId,
+          nombre: jugadorNombre,
+          hora: horaNow,
+          tipo: 'linea',
+          numeroLinea,
+        };
+        const updatedGanadores = [...ganadoresLineaActuales, ganadorInfo];
+        await updateDoc(docRef, {
+          ganadoresLinea: updatedGanadores,
+          ganadorLinea: ganadorInfo,
+        });
+        await updateDoc(doc(db, 'juntadas', juntadaId, 'cartones', cartonId), {
+          ganoLineaAt: horaNow,
+        });
+        return ganadorInfo;
+      } else {
+        const ganadorInfo: GanadorInfo = {
+          jugadorId,
+          nombre: jugadorNombre,
+          hora: horaNow,
+          tipo: 'lleno',
+        };
+        await updateDoc(docRef, {
+          ganadorLleno: ganadorInfo,
+          estado: 'terminada',
+        });
+        await updateDoc(doc(db, 'juntadas', juntadaId, 'cartones', cartonId), {
+          ganoLlenoAt: horaNow,
+        });
+        return ganadorInfo;
+      }
+    } catch (err) {
+      console.warn('Error en cantarVictoria Firestore:', err);
     }
+  }
+
+  // Local fallback
+  const local = getLocalDB();
+  const juntada = local.juntadas[juntadaId];
+  if (!juntada) return null;
+
+  if (tipo === 'linea') {
+    const ganadoresLineaActuales: GanadorInfo[] = juntada.ganadoresLinea || (juntada.ganadorLinea ? [juntada.ganadorLinea] : []);
+    if (ganadoresLineaActuales.length >= 3) {
+      return null;
+    }
+    const numeroLinea = ganadoresLineaActuales.length + 1;
+    const ganadorInfo: GanadorInfo = {
+      jugadorId,
+      nombre: jugadorNombre,
+      hora: horaNow,
+      tipo: 'linea',
+      numeroLinea,
+    };
+    juntada.ganadoresLinea = [...ganadoresLineaActuales, ganadorInfo];
+    juntada.ganadorLinea = ganadorInfo;
+
     const cList = local.cartones[juntadaId] || [];
     const c = cList.find(x => x.id === cartonId);
-    if (c) {
-      if (tipo === 'linea') c.ganoLineaAt = horaNow;
-      if (tipo === 'lleno') c.ganoLlenoAt = horaNow;
-    }
+    if (c) c.ganoLineaAt = horaNow;
+
     saveLocalDB(local);
-    broadcastLocalEvent('JUNTADA_UPDATED', local.juntadas[juntadaId]);
+    broadcastLocalEvent('JUNTADA_UPDATED', juntada);
     broadcastLocalEvent('CARTONES_UPDATED', { juntadaId, cartones: local.cartones[juntadaId] });
+    return ganadorInfo;
+  } else {
+    const ganadorInfo: GanadorInfo = {
+      jugadorId,
+      nombre: jugadorNombre,
+      hora: horaNow,
+      tipo: 'lleno',
+    };
+    juntada.ganadorLleno = ganadorInfo;
+    juntada.estado = 'terminada';
+
+    const cList = local.cartones[juntadaId] || [];
+    const c = cList.find(x => x.id === cartonId);
+    if (c) c.ganoLlenoAt = horaNow;
+
+    saveLocalDB(local);
+    broadcastLocalEvent('JUNTADA_UPDATED', juntada);
+    broadcastLocalEvent('CARTONES_UPDATED', { juntadaId, cartones: local.cartones[juntadaId] });
+    return ganadorInfo;
   }
 }

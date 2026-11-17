@@ -87,9 +87,16 @@ export default function HomePage() {
                   </span>
                 </div>
                 <span className="text-[12px] font-bold text-neutral-950 leading-tight">
-                  jugá con los tuyos
+                  ganan 3 líneas y bingo
                 </span>
               </div>
+            </div>
+
+            {/* Aviso de victoria en la Home */}
+            <div className="w-full mb-6 py-2 px-3 rounded-2xl bg-red-50/70 border border-[#E52320]/25 flex items-center justify-center gap-1.5 text-center">
+              <span className="text-xs font-bold text-[#E52320] leading-snug">
+                🏆 ganan los que hacen línea (¡hay 3!) y el cartón lleno
+              </span>
             </div>
           </div>
 
