@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Copy, Check, Share2, Plus, Users } from 'lucide-react';
 import {
   createJuntada,
+  getJuntadaById,
   addClasico,
   addJugador,
   subscribeToJuntada,
@@ -31,6 +32,7 @@ export default function InvitarPaso3Page() {
   const [repartiendo, setRepartiendo] = useState(false);
   const [originUrl, setOriginUrl] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [errorCreacion, setErrorCreacion] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -38,7 +40,6 @@ export default function InvitarPaso3Page() {
     }
 
     async function initJuntada() {
-      // Si ya hay una juntada activa creada en esta sesión
       const activeJuntadaId = localStorage.getItem('carton_lleno_active_id');
       const draftRaw = localStorage.getItem('carton_lleno_draft');
       const clasicosRaw = localStorage.getItem('carton_lleno_draft_clasicos');
@@ -48,17 +49,25 @@ export default function InvitarPaso3Page() {
         return;
       }
 
-      const hostUid = await getDeviceId();
-
+      // Si ya hay una juntada activa creada previamente en esta sesión, intentamos cargarla
       if (activeJuntadaId) {
-        // Ya fue creada
-        setLoading(false);
-        return;
+        try {
+          const existing = await getJuntadaById(activeJuntadaId);
+          if (existing) {
+            setJuntada(existing);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.warn('Error al recuperar juntada activa previa:', err);
+        }
+        localStorage.removeItem('carton_lleno_active_id');
       }
 
-      // Crear la juntada por primera vez
+      // Crear la juntada por primera vez desde el borrador
       if (draftRaw) {
         try {
+          const hostUid = await getDeviceId();
           const draft = JSON.parse(draftRaw);
           const nueva = await createJuntada({
             nombre: draft.nombre,
@@ -70,11 +79,15 @@ export default function InvitarPaso3Page() {
             hostUid,
           });
 
-          // Cargar los clásicos iniciales
+          // Cargar los clásicos iniciales en paralelo
           if (clasicosRaw) {
-            const list = JSON.parse(clasicosRaw);
-            for (const item of list) {
-              await addClasico(nueva.id, item.texto);
+            try {
+              const list = JSON.parse(clasicosRaw);
+              await Promise.allSettled(
+                list.map((item: any) => addClasico(nueva.id, item.texto))
+              );
+            } catch (err) {
+              console.warn('Error al cargar clásicos iniciales:', err);
             }
           }
 
@@ -85,8 +98,9 @@ export default function InvitarPaso3Page() {
           localStorage.setItem('carton_lleno_active_id', nueva.id);
           localStorage.setItem('carton_lleno_active_slug', nueva.slug);
           setJuntada(nueva);
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error al crear juntada:', err);
+          setErrorCreacion(err?.message || 'Error al conectar con la base de datos.');
         } finally {
           setLoading(false);
         }
@@ -173,14 +187,37 @@ export default function InvitarPaso3Page() {
 
   const totalRequerido = juntada ? getTotalCasilleros(juntada.formato) : 16;
 
-  if (loading || !juntada) {
+  if (loading) {
     return (
       <MobileContainer>
         <div className="flex flex-col items-center justify-center flex-1 py-12">
-          <div className="w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-sm font-semibold text-neutral-700">
-            Creando tu juntada...
+          <div className="w-8 h-8 border-2 border-[#E52320] border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-sm font-semibold text-neutral-700 lowercase">
+            creando tu juntada...
           </p>
+        </div>
+      </MobileContainer>
+    );
+  }
+
+  if (!juntada) {
+    return (
+      <MobileContainer>
+        <div className="flex flex-col items-center justify-center flex-1 py-12 text-center px-4">
+          <p className="text-base font-bold text-neutral-900 mb-2 lowercase">
+            no se pudo cargar la juntada
+          </p>
+          <p className="text-xs text-neutral-500 mb-6 lowercase">
+            {errorCreacion || 'revisá tu conexión y volvé a intentar.'}
+          </p>
+          <div className="flex flex-col gap-2.5 w-full max-w-xs mx-auto">
+            <Button fullWidth onClick={() => window.location.reload()}>
+              reintentar
+            </Button>
+            <Button variant="outline" fullWidth onClick={() => router.push('/nueva/paso-1')}>
+              volver al paso 1
+            </Button>
+          </div>
         </div>
       </MobileContainer>
     );

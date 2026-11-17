@@ -53,6 +53,8 @@ export default function CrearJuntadaPaso1Page() {
       premio: premio.trim() || 'el que gana se lleva las sobras de vitel toné',
     };
 
+    localStorage.removeItem('carton_lleno_active_id');
+    localStorage.removeItem('carton_lleno_active_slug');
     localStorage.setItem('carton_lleno_draft', JSON.stringify(draft));
     router.push('/nueva/paso-2');
   };

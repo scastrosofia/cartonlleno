@@ -99,69 +99,113 @@ export async function createJuntada(params: {
     creadaEn: Date.now(),
   };
 
+  // Guardar siempre en localDB para reactividad instantánea y fallback offline
+  const local = getLocalDB();
+  local.juntadas[juntadaId] = juntada;
+  local.clasicos[juntadaId] = [];
+  local.jugadores[juntadaId] = [];
+  local.cartones[juntadaId] = [];
+  saveLocalDB(local);
+  broadcastLocalEvent('JUNTADA_UPDATED', juntada);
+
   if (isFirebaseConfigured && db) {
-    const docRef = doc(db, 'juntadas', juntadaId);
-    await setDoc(docRef, juntada);
-  } else {
-    const local = getLocalDB();
-    local.juntadas[juntadaId] = juntada;
-    local.clasicos[juntadaId] = [];
-    local.jugadores[juntadaId] = [];
-    local.cartones[juntadaId] = [];
-    saveLocalDB(local);
-    broadcastLocalEvent('JUNTADA_UPDATED', juntada);
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId);
+      await setDoc(docRef, juntada);
+    } catch (err) {
+      console.warn('Error al guardar juntada en Firestore, usando almacenamiento local:', err);
+    }
   }
 
   return juntada;
 }
 
+export async function getJuntadaById(juntadaId: string): Promise<Juntada | null> {
+  if (isFirebaseConfigured && db) {
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId);
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        return snapshot.data() as Juntada;
+      }
+    } catch (err) {
+      console.warn('Error en getJuntadaById Firestore:', err);
+    }
+  }
+  const local = getLocalDB();
+  return local.juntadas[juntadaId] || null;
+}
+
 export async function getJuntadaBySlug(slug: string): Promise<Juntada | null> {
   if (isFirebaseConfigured && db) {
-    const q = query(collection(db, 'juntadas'), where('slug', '==', slug));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      return snapshot.docs[0].data() as Juntada;
+    try {
+      const q = query(collection(db, 'juntadas'), where('slug', '==', slug));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        return snapshot.docs[0].data() as Juntada;
+      }
+    } catch (err) {
+      console.warn('Error en getJuntadaBySlug Firestore:', err);
     }
-  } else {
-    const local = getLocalDB();
-    const found = Object.values(local.juntadas).find(j => j.slug === slug);
-    if (found) return found;
   }
+  const local = getLocalDB();
+  const found = Object.values(local.juntadas).find(j => j.slug === slug);
+  if (found) return found;
   return null;
 }
 
 export async function getJuntadaByCodigo(codigo: string): Promise<Juntada | null> {
   const cleanCode = codigo.trim().toUpperCase();
   if (isFirebaseConfigured && db) {
-    const q = query(collection(db, 'juntadas'), where('codigo', '==', cleanCode));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      return snapshot.docs[0].data() as Juntada;
+    try {
+      const q = query(collection(db, 'juntadas'), where('codigo', '==', cleanCode));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        return snapshot.docs[0].data() as Juntada;
+      }
+    } catch (err) {
+      console.warn('Error en getJuntadaByCodigo Firestore:', err);
     }
-  } else {
-    const local = getLocalDB();
-    const found = Object.values(local.juntadas).find(j => j.codigo.toUpperCase() === cleanCode);
-    if (found) return found;
   }
+  const local = getLocalDB();
+  const found = Object.values(local.juntadas).find(j => j.codigo.toUpperCase() === cleanCode);
+  if (found) return found;
   return null;
 }
 
 export function subscribeToJuntada(juntadaId: string, callback: (juntada: Juntada | null) => void): () => void {
+  let unsubFirestore: (() => void) | null = null;
+
   if (isFirebaseConfigured && db) {
-    const docRef = doc(db, 'juntadas', juntadaId);
-    return onSnapshot(docRef, snapshot => {
-      if (snapshot.exists()) {
-        callback(snapshot.data() as Juntada);
-      } else {
-        callback(null);
-      }
-    });
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId);
+      unsubFirestore = onSnapshot(
+        docRef,
+        snapshot => {
+          if (snapshot.exists()) {
+            callback(snapshot.data() as Juntada);
+          } else {
+            const local = getLocalDB();
+            callback(local.juntadas[juntadaId] || null);
+          }
+        },
+        error => {
+          console.warn('Firestore onSnapshot juntada error, fallback local:', error);
+          const local = getLocalDB();
+          callback(local.juntadas[juntadaId] || null);
+        }
+      );
+    } catch (err) {
+      console.warn('Error al suscribir Firestore juntada:', err);
+    }
   }
 
   // Local fallback
   const refresh = () => {
     const local = getLocalDB();
-    callback(local.juntadas[juntadaId] || null);
+    if (local.juntadas[juntadaId]) {
+      callback(local.juntadas[juntadaId]);
+    }
   };
   refresh();
 
@@ -179,6 +223,7 @@ export function subscribeToJuntada(juntadaId: string, callback: (juntada: Juntad
   window.addEventListener('storage', handleStorage);
 
   return () => {
+    if (unsubFirestore) unsubFirestore();
     if (localChannel) localChannel.removeEventListener('message', handleMessage);
     window.removeEventListener('storage', handleStorage);
   };
@@ -197,43 +242,65 @@ export async function addClasico(juntadaId: string, texto: string): Promise<Clas
     creadoEn: Date.now(),
   };
 
+  const local = getLocalDB();
+  if (!local.clasicos[juntadaId]) local.clasicos[juntadaId] = [];
+  local.clasicos[juntadaId].push(clasico);
+  saveLocalDB(local);
+  broadcastLocalEvent('CLASICOS_UPDATED', { juntadaId, clasicos: local.clasicos[juntadaId] });
+
   if (isFirebaseConfigured && db) {
-    const docRef = doc(db, 'juntadas', juntadaId, 'clasicos', id);
-    await setDoc(docRef, clasico);
-  } else {
-    const local = getLocalDB();
-    if (!local.clasicos[juntadaId]) local.clasicos[juntadaId] = [];
-    local.clasicos[juntadaId].push(clasico);
-    saveLocalDB(local);
-    broadcastLocalEvent('CLASICOS_UPDATED', { juntadaId, clasicos: local.clasicos[juntadaId] });
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId, 'clasicos', id);
+      await setDoc(docRef, clasico);
+    } catch (err) {
+      console.warn('Error al guardar clasico en Firestore:', err);
+    }
   }
 
   return clasico;
 }
 
 export async function removeClasico(juntadaId: string, clasicoId: string): Promise<void> {
+  const local = getLocalDB();
+  if (local.clasicos[juntadaId]) {
+    local.clasicos[juntadaId] = local.clasicos[juntadaId].filter(c => c.id !== clasicoId);
+    saveLocalDB(local);
+    broadcastLocalEvent('CLASICOS_UPDATED', { juntadaId, clasicos: local.clasicos[juntadaId] });
+  }
+
   if (isFirebaseConfigured && db) {
-    const docRef = doc(db, 'juntadas', juntadaId, 'clasicos', clasicoId);
-    await deleteDoc(docRef);
-  } else {
-    const local = getLocalDB();
-    if (local.clasicos[juntadaId]) {
-      local.clasicos[juntadaId] = local.clasicos[juntadaId].filter(c => c.id !== clasicoId);
-      saveLocalDB(local);
-      broadcastLocalEvent('CLASICOS_UPDATED', { juntadaId, clasicos: local.clasicos[juntadaId] });
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId, 'clasicos', clasicoId);
+      await deleteDoc(docRef);
+    } catch (err) {
+      console.warn('Error al eliminar clasico en Firestore:', err);
     }
   }
 }
 
 export function subscribeToClasicos(juntadaId: string, callback: (clasicos: Clasico[]) => void): () => void {
+  let unsubFirestore: (() => void) | null = null;
+
   if (isFirebaseConfigured && db) {
-    const colRef = collection(db, 'juntadas', juntadaId, 'clasicos');
-    return onSnapshot(colRef, snapshot => {
-      const list: Clasico[] = [];
-      snapshot.forEach(d => list.push(d.data() as Clasico));
-      list.sort((a, b) => a.creadoEn - b.creadoEn);
-      callback(list);
-    });
+    try {
+      const colRef = collection(db, 'juntadas', juntadaId, 'clasicos');
+      unsubFirestore = onSnapshot(
+        colRef,
+        snapshot => {
+          const list: Clasico[] = [];
+          snapshot.forEach(d => list.push(d.data() as Clasico));
+          list.sort((a, b) => a.creadoEn - b.creadoEn);
+          callback(list);
+        },
+        error => {
+          console.warn('Firestore onSnapshot clasicos error, fallback local:', error);
+          const local = getLocalDB();
+          callback(local.clasicos[juntadaId] || []);
+        }
+      );
+    } catch (err) {
+      console.warn('Error al suscribir clasicos Firestore:', err);
+    }
   }
 
   const refresh = () => {
@@ -256,6 +323,7 @@ export function subscribeToClasicos(juntadaId: string, callback: (clasicos: Clas
   window.addEventListener('storage', handleStorage);
 
   return () => {
+    if (unsubFirestore) unsubFirestore();
     if (localChannel) localChannel.removeEventListener('message', handleMessage);
     window.removeEventListener('storage', handleStorage);
   };
@@ -283,29 +351,47 @@ export async function addJugador(
     creadoEn: Date.now(),
   };
 
+  const local = getLocalDB();
+  if (!local.jugadores[juntadaId]) local.jugadores[juntadaId] = [];
+  local.jugadores[juntadaId].push(jugador);
+  saveLocalDB(local);
+  broadcastLocalEvent('JUGADORES_UPDATED', { juntadaId, jugadores: local.jugadores[juntadaId] });
+
   if (isFirebaseConfigured && db) {
-    const docRef = doc(db, 'juntadas', juntadaId, 'jugadores', id);
-    await setDoc(docRef, jugador);
-  } else {
-    const local = getLocalDB();
-    if (!local.jugadores[juntadaId]) local.jugadores[juntadaId] = [];
-    local.jugadores[juntadaId].push(jugador);
-    saveLocalDB(local);
-    broadcastLocalEvent('JUGADORES_UPDATED', { juntadaId, jugadores: local.jugadores[juntadaId] });
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId, 'jugadores', id);
+      await setDoc(docRef, jugador);
+    } catch (err) {
+      console.warn('Error al guardar jugador en Firestore:', err);
+    }
   }
 
   return jugador;
 }
 
 export function subscribeToJugadores(juntadaId: string, callback: (jugadores: Jugador[]) => void): () => void {
+  let unsubFirestore: (() => void) | null = null;
+
   if (isFirebaseConfigured && db) {
-    const colRef = collection(db, 'juntadas', juntadaId, 'jugadores');
-    return onSnapshot(colRef, snapshot => {
-      const list: Jugador[] = [];
-      snapshot.forEach(d => list.push(d.data() as Jugador));
-      list.sort((a, b) => a.creadoEn - b.creadoEn);
-      callback(list);
-    });
+    try {
+      const colRef = collection(db, 'juntadas', juntadaId, 'jugadores');
+      unsubFirestore = onSnapshot(
+        colRef,
+        snapshot => {
+          const list: Jugador[] = [];
+          snapshot.forEach(d => list.push(d.data() as Jugador));
+          list.sort((a, b) => a.creadoEn - b.creadoEn);
+          callback(list);
+        },
+        error => {
+          console.warn('Firestore onSnapshot jugadores error, fallback local:', error);
+          const local = getLocalDB();
+          callback(local.jugadores[juntadaId] || []);
+        }
+      );
+    } catch (err) {
+      console.warn('Error al suscribir jugadores Firestore:', err);
+    }
   }
 
   const refresh = () => {
@@ -328,6 +414,7 @@ export function subscribeToJugadores(juntadaId: string, callback: (jugadores: Ju
   window.addEventListener('storage', handleStorage);
 
   return () => {
+    if (unsubFirestore) unsubFirestore();
     if (localChannel) localChannel.removeEventListener('message', handleMessage);
     window.removeEventListener('storage', handleStorage);
   };
@@ -406,16 +493,32 @@ export function subscribeToCarton(
   callback: (carton: Carton | null) => void
 ): () => void {
   const cartonId = `carton_${jugadorId}`;
+  let unsubFirestore: (() => void) | null = null;
 
   if (isFirebaseConfigured && db) {
-    const docRef = doc(db, 'juntadas', juntadaId, 'cartones', cartonId);
-    return onSnapshot(docRef, snapshot => {
-      if (snapshot.exists()) {
-        callback(snapshot.data() as Carton);
-      } else {
-        callback(null);
-      }
-    });
+    try {
+      const docRef = doc(db, 'juntadas', juntadaId, 'cartones', cartonId);
+      unsubFirestore = onSnapshot(
+        docRef,
+        snapshot => {
+          if (snapshot.exists()) {
+            callback(snapshot.data() as Carton);
+          } else {
+            const local = getLocalDB();
+            const list = local.cartones[juntadaId] || [];
+            callback(list.find(c => c.jugadorId === jugadorId) || null);
+          }
+        },
+        error => {
+          console.warn('Firestore onSnapshot carton error, fallback local:', error);
+          const local = getLocalDB();
+          const list = local.cartones[juntadaId] || [];
+          callback(list.find(c => c.jugadorId === jugadorId) || null);
+        }
+      );
+    } catch (err) {
+      console.warn('Error al suscribir carton:', err);
+    }
   }
 
   const refresh = () => {
@@ -442,6 +545,7 @@ export function subscribeToCarton(
   window.addEventListener('storage', handleStorage);
 
   return () => {
+    if (unsubFirestore) unsubFirestore();
     if (localChannel) localChannel.removeEventListener('message', handleMessage);
     window.removeEventListener('storage', handleStorage);
   };
@@ -451,13 +555,27 @@ export function subscribeToAllCartones(
   juntadaId: string,
   callback: (cartones: Carton[]) => void
 ): () => void {
+  let unsubFirestore: (() => void) | null = null;
+
   if (isFirebaseConfigured && db) {
-    const colRef = collection(db, 'juntadas', juntadaId, 'cartones');
-    return onSnapshot(colRef, snapshot => {
-      const list: Carton[] = [];
-      snapshot.forEach(d => list.push(d.data() as Carton));
-      callback(list);
-    });
+    try {
+      const colRef = collection(db, 'juntadas', juntadaId, 'cartones');
+      unsubFirestore = onSnapshot(
+        colRef,
+        snapshot => {
+          const list: Carton[] = [];
+          snapshot.forEach(d => list.push(d.data() as Carton));
+          callback(list);
+        },
+        error => {
+          console.warn('Firestore onSnapshot allCartones error, fallback local:', error);
+          const local = getLocalDB();
+          callback(local.cartones[juntadaId] || []);
+        }
+      );
+    } catch (err) {
+      console.warn('Error al suscribir allCartones:', err);
+    }
   }
 
   const refresh = () => {
