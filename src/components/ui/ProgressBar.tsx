@@ -25,9 +25,9 @@ export function ProgressBar({
           {rightLabel && <span>{rightLabel}</span>}
         </div>
       )}
-      <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
+      <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden">
         <div
-          className="h-full bg-neutral-900 rounded-full transition-all duration-300 ease-out"
+          className="h-full bg-[#E52320] rounded-full transition-all duration-300 ease-out"
           style={{ width: `${percentage}%` }}
         />
       </div>

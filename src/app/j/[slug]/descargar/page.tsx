@@ -136,39 +136,39 @@ function DescargarCartonesContent() {
           >
             <ChevronLeft className="w-6 h-6 stroke-[2.2]" />
           </button>
-          <h1 className="text-lg font-bold text-neutral-900 tracking-tight ml-2">
-            Cartones para imprimir
+          <h1 className="text-lg font-bold text-neutral-900 tracking-tight ml-2 lowercase">
+            cartones para imprimir
           </h1>
         </header>
 
         {/* Badge y subtítulo */}
         <div className="flex items-center gap-2 mb-2">
-          <span className="bg-neutral-900 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-            Modo tradicional
+          <span className="bg-[#E52320] text-white text-[10px] font-bold px-3 py-1 rounded-full lowercase tracking-wider">
+            modo tradicional
           </span>
-          <span className="text-xs text-neutral-500 font-medium">
+          <span className="text-xs text-neutral-500 font-medium lowercase">
             {jugadores.length || cartones.length || 6} jugadores · {juntada.formato}
           </span>
         </div>
 
         {/* Título de la pantalla */}
-        <h2 className="text-xl font-extrabold text-neutral-950 tracking-tight leading-tight mb-4">
-          Sin celus en la mesa: cada uno con su cartón y una birome
+        <h2 className="font-serif text-xl font-bold text-neutral-950 tracking-tight leading-tight mb-4 lowercase">
+          modo retro: cartón y birome
         </h2>
 
         {/* Miniaturas de los cartones */}
         <div className="grid grid-cols-3 gap-2.5 mb-5 max-h-[190px] overflow-y-auto pr-0.5">
           {nombresMiniaturas.slice(0, 9).map((nombre, idx) => (
             <div key={idx} className="flex flex-col items-center">
-              <div className="w-full aspect-[4/3] rounded-xl border-[1.5px] border-neutral-300 bg-white p-1 flex items-center justify-center shadow-2xs">
-                {/* Mini grilla ilustrativa */}
-                <div className="grid grid-cols-4 gap-0.5 w-full h-full p-0.5 opacity-60">
+              <div className="w-full aspect-[4/3] rounded-2xl border-[1.5px] border-neutral-300 bg-white p-1.5 flex items-center justify-center shadow-2xs">
+                {/* Mini grilla ilustrativa con celdas rojas sutiles */}
+                <div className="grid grid-cols-4 gap-0.5 w-full h-full p-0.5 opacity-70">
                   {Array.from({ length: 16 }).map((_, i) => (
-                    <div key={i} className="border border-neutral-400 rounded-2xs" />
+                    <div key={i} className="border border-neutral-300 rounded-[2px] bg-red-50/40" />
                   ))}
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-neutral-800 mt-1 truncate max-w-full text-center">
+              <span className="text-[11px] font-medium text-neutral-800 mt-1 truncate max-w-full text-center lowercase">
                 {nombre}
               </span>
             </div>
@@ -177,30 +177,32 @@ function DescargarCartonesContent() {
 
         {/* ¿Cómo los imprimís? */}
         <div className="mb-4">
-          <label className="text-xs font-bold text-neutral-900 block mb-2">
-            ¿Cómo los imprimís?
+          <label className="text-xs font-bold text-neutral-900 block mb-2 lowercase">
+            ¿cómo los imprimís?
           </label>
           <div className="flex flex-col gap-2">
             {/* Opción 1 por hoja */}
             <button
               type="button"
               onClick={() => setModoImpresion('1_por_hoja')}
-              className={`p-3 rounded-xl border-[1.5px] text-left flex items-start gap-3 transition-all ${
+              className={`p-3.5 rounded-2xl border-[1.5px] text-left flex items-start gap-3 transition-all ${
                 modoImpresion === '1_por_hoja'
-                  ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
+                  ? 'border-neutral-950 bg-neutral-50/50 ring-1 ring-neutral-950'
                   : 'border-neutral-200 bg-white hover:border-neutral-300'
               }`}
             >
-              <div className="mt-0.5 w-4 h-4 rounded-full border-[1.5px] border-neutral-900 flex items-center justify-center shrink-0">
+              <div className={`mt-0.5 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center shrink-0 ${
+                modoImpresion === '1_por_hoja' ? 'border-[#E52320]' : 'border-neutral-400'
+              }`}>
                 {modoImpresion === '1_por_hoja' && (
-                  <div className="w-2 h-2 rounded-full bg-neutral-900" />
+                  <div className="w-2 h-2 rounded-full bg-[#E52320]" />
                 )}
               </div>
               <div>
-                <span className="text-xs font-bold text-neutral-900 block">
+                <span className="text-xs font-bold text-neutral-900 block lowercase">
                   1 cartón por hoja
                 </span>
-                <span className="text-[11px] text-neutral-500">
+                <span className="text-[11px] text-neutral-500 lowercase">
                   A4, para que se lea desde lejos
                 </span>
               </div>
@@ -210,23 +212,25 @@ function DescargarCartonesContent() {
             <button
               type="button"
               onClick={() => setModoImpresion('4_por_hoja')}
-              className={`p-3 rounded-xl border-[1.5px] text-left flex items-start gap-3 transition-all ${
+              className={`p-3.5 rounded-2xl border-[1.5px] text-left flex items-start gap-3 transition-all ${
                 modoImpresion === '4_por_hoja'
-                  ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
+                  ? 'border-neutral-950 bg-neutral-50/50 ring-1 ring-neutral-950'
                   : 'border-neutral-200 bg-white hover:border-neutral-300'
               }`}
             >
-              <div className="mt-0.5 w-4 h-4 rounded-full border-[1.5px] border-neutral-900 flex items-center justify-center shrink-0">
+              <div className={`mt-0.5 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center shrink-0 ${
+                modoImpresion === '4_por_hoja' ? 'border-[#E52320]' : 'border-neutral-400'
+              }`}>
                 {modoImpresion === '4_por_hoja' && (
-                  <div className="w-2 h-2 rounded-full bg-neutral-900" />
+                  <div className="w-2 h-2 rounded-full bg-[#E52320]" />
                 )}
               </div>
               <div>
-                <span className="text-xs font-bold text-neutral-900 block">
+                <span className="text-xs font-bold text-neutral-900 block lowercase">
                   4 cartones por hoja
                 </span>
-                <span className="text-[11px] text-neutral-500">
-                  Ahorrás papel (con líneas de corte)
+                <span className="text-[11px] text-neutral-500 lowercase">
+                  ahorrás papel (con líneas de corte)
                 </span>
               </div>
             </button>
@@ -240,10 +244,10 @@ function DescargarCartonesContent() {
               type="checkbox"
               checked={incluirHojaCantor}
               onChange={(e) => setIncluirHojaCantor(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded accent-neutral-900"
+              className="mt-0.5 w-4 h-4 rounded accent-[#E52320]"
             />
-            <span className="text-xs text-neutral-800 leading-tight">
-              Incluir hoja del cantor (todos los clásicos para ir tachando)
+            <span className="text-xs text-neutral-800 leading-tight lowercase">
+              incluir hoja del cantor (todos los clásicos para ir tachando)
             </span>
           </label>
 
@@ -252,10 +256,10 @@ function DescargarCartonesContent() {
               type="checkbox"
               checked={sumarExtras}
               onChange={(e) => setSumarExtras(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded accent-neutral-900"
+              className="mt-0.5 w-4 h-4 rounded accent-[#E52320]"
             />
-            <span className="text-xs text-neutral-800 leading-tight">
-              Sumar 2 cartones extra para los que caen sin avisar
+            <span className="text-xs text-neutral-800 leading-tight lowercase">
+              sumar 2 cartones extra para los que caen sin avisar
             </span>
           </label>
         </div>
@@ -274,24 +278,23 @@ function DescargarCartonesContent() {
                 ¡PDF descargado!
               </>
             ) : generando ? (
-              'Generando PDF...'
+              'generando PDF...'
             ) : (
               <>
                 <Download className="w-4 h-4 mr-2" />
-                Descargar PDF · {totalCartones} cartones
+                descargar PDF · {totalCartones} cartones
               </>
             )}
           </Button>
 
-          <Button
-            size="lg"
-            variant="outline"
-            fullWidth
+          <button
+            type="button"
             onClick={handleCompartirWhatsApp}
+            className="w-full min-h-[48px] bg-white border-2 border-[#E52320] text-[#E52320] font-bold text-sm rounded-2xl flex items-center justify-center gap-2 hover:bg-red-50/50 active:scale-98 transition-all lowercase"
           >
-            <Share2 className="w-4 h-4 mr-2" />
-            Mandar el PDF por WhatsApp
-          </Button>
+            <Share2 className="w-4 h-4" />
+            <span>mandar el PDF por WhatsApp</span>
+          </button>
         </div>
       </div>
     </MobileContainer>

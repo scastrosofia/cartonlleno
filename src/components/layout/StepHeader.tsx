@@ -23,7 +23,7 @@ export function StepHeader({ title, step, onBack }: StepHeaderProps) {
 
   return (
     <header className="w-full mb-6">
-      <div className="flex items-center justify-between min-h-[44px] mb-3">
+      <div className="flex items-center min-h-[44px] mb-3">
         <button
           onClick={handleBack}
           aria-label="Volver atrás"
@@ -31,29 +31,26 @@ export function StepHeader({ title, step, onBack }: StepHeaderProps) {
         >
           <ChevronLeft className="w-6 h-6 stroke-[2.2]" />
         </button>
-        <h1 className="text-lg font-bold text-neutral-900 tracking-tight flex-1 ml-2">
+        <h1 className="text-lg font-bold text-neutral-900 tracking-tight ml-2 lowercase">
           {title}
         </h1>
-        <span className="text-xs font-medium text-neutral-500">
-          Paso {step} de 3
-        </span>
       </div>
 
-      {/* Barra de progreso de 3 segmentos */}
+      {/* Barra de progreso de 3 segmentos con rojo #E52320 */}
       <div className="grid grid-cols-3 gap-2 w-full">
         <div
           className={`h-1.5 rounded-full transition-colors duration-200 ${
-            step >= 1 ? 'bg-neutral-900' : 'bg-neutral-200'
+            step >= 1 ? 'bg-[#E52320]' : 'bg-neutral-200'
           }`}
         />
         <div
           className={`h-1.5 rounded-full transition-colors duration-200 ${
-            step >= 2 ? 'bg-neutral-900' : 'bg-neutral-200'
+            step >= 2 ? 'bg-[#E52320]' : 'bg-neutral-200'
           }`}
         />
         <div
           className={`h-1.5 rounded-full transition-colors duration-200 ${
-            step >= 3 ? 'bg-neutral-900' : 'bg-neutral-200'
+            step >= 3 ? 'bg-[#E52320]' : 'bg-neutral-200'
           }`}
         />
       </div>

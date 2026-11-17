@@ -203,39 +203,36 @@ function InvitadoSeUneContent() {
   return (
     <MobileContainer>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 pb-4">
-        {/* Banner cartón ilustrado */}
-        <div className="w-full p-5 rounded-2xl border-[1.5px] border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center min-h-[140px] text-center mb-5">
-          <span className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-1">
-            Human Friendly presenta
-          </span>
-          <span className="text-xs font-extrabold text-neutral-900">
-            Cartón lleno, corazón contento
-          </span>
-          <span className="text-[10px] text-neutral-500 mt-1">
-            El bingo de las fiestas
-          </span>
+        {/* Banner con Logo animado */}
+        <div className="w-full flex flex-col items-center justify-center pt-2 pb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-carton.gif"
+            alt="Cartón lleno, corazón contento"
+            className="w-48 h-auto max-h-24 object-contain"
+          />
         </div>
 
         {/* Título de invitación */}
-        <div className="mb-5">
-          <span className="text-xs font-semibold text-neutral-500 block mb-0.5">
-            Te invitaron a
+        <div className="mb-5 text-center">
+          <span className="text-xs font-medium text-neutral-500 block mb-1 lowercase">
+            te invitaron a
           </span>
-          <h1 className="text-2xl font-extrabold text-neutral-950 tracking-tight leading-tight">
+          <h1 className="font-serif text-2xl font-bold text-neutral-950 tracking-tight leading-tight">
             {juntada.nombre}
           </h1>
-          <p className="text-xs text-neutral-600 mt-1">
-            {juntada.fecha} · Premio: {juntada.premio}
+          <p className="text-xs text-neutral-500 mt-1 lowercase">
+            {juntada.fecha} · premio: {juntada.premio}
           </p>
         </div>
 
         {/* Campo Nombre */}
         <div className="mb-5">
-          <label className="text-sm font-bold text-neutral-900 block mb-1.5">
-            Tu nombre o apodo
+          <label className="text-xs font-bold text-neutral-900 block mb-1.5 lowercase">
+            tu nombre
           </label>
           <Input
-            placeholder="Ej: Tío Rubén"
+            placeholder="federico"
             value={nombre}
             onChange={(e) => {
               setNombre(e.target.value);
@@ -249,26 +246,26 @@ function InvitadoSeUneContent() {
         {/* Campos de clásicos anónimos */}
         <div className="flex flex-col gap-2.5 mb-6">
           <div>
-            <label className="text-sm font-bold text-neutral-900 block">
-              Sumá tus clásicos (opcional)
+            <label className="text-xs font-bold text-neutral-900 block lowercase">
+              sumá tus clásicos
             </label>
-            <span className="text-xs text-neutral-500 block">
-              Nadie va a saber quién escribió qué.
+            <span className="text-[11px] text-neutral-500 block lowercase">
+              son anónimos
             </span>
           </div>
 
           <Input
-            placeholder="a. Ej: Alguien dice que el asado está crudo"
+            placeholder="clásico 1"
             value={clasico1}
             onChange={(e) => setClasico1(e.target.value)}
           />
           <Input
-            placeholder="b. Ej: Brindan con la copa equivocada"
+            placeholder="clásico 2"
             value={clasico2}
             onChange={(e) => setClasico2(e.target.value)}
           />
           <Input
-            placeholder="c. Ej: Se pierde el destapador"
+            placeholder="clásico 3"
             value={clasico3}
             onChange={(e) => setClasico3(e.target.value)}
           />
@@ -277,7 +274,7 @@ function InvitadoSeUneContent() {
         {/* Botón Entrar */}
         <div className="mt-auto pt-2">
           <Button size="lg" fullWidth type="submit" disabled={submitting}>
-            {submitting ? 'Entrando...' : 'Entrar al bingo'}
+            {submitting ? 'entrando...' : 'entrar al bingo'}
           </Button>
         </div>
       </form>

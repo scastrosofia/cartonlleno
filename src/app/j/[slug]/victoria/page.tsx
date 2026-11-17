@@ -79,38 +79,41 @@ function VictoriaContent() {
 
   return (
     <MobileContainer>
-      <div className="flex flex-col flex-1 justify-between py-2 text-center">
-        {/* Recuadro de animación de festejo */}
-        <div className="w-full p-6 rounded-2xl border-[1.5px] border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center min-h-[220px] mb-6 relative overflow-hidden">
-          <div className="w-20 h-20 rounded-full bg-white border-[1.5px] border-neutral-900 flex items-center justify-center mb-3 shadow-md animate-bounce">
-            <Trophy className="w-10 h-10 text-neutral-900" />
-          </div>
-          <span className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-neutral-700" />
-            ¡Tenemos ganador en la mesa!
+      <div className="flex flex-col flex-1 justify-between py-4 text-center">
+        {/* Banner de animación de festejo con Logo Gif */}
+        <div className="w-full p-4 rounded-3xl border-2 border-dashed border-[#E52320]/30 bg-red-50/30 flex flex-col items-center justify-center min-h-[190px] mb-6 relative overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-carton.gif"
+            alt="Cartón lleno, corazón contento"
+            className="w-48 h-auto max-h-24 object-contain mb-2"
+          />
+          <span className="text-xs font-bold text-[#E52320] flex items-center gap-1.5 lowercase">
+            <Sparkles className="w-4 h-4 text-[#E52320]" />
+            ¡tenemos ganador en la mesa!
           </span>
-          <span className="text-[11px] text-neutral-500 mt-1">
+          <span className="text-[11px] text-neutral-500 mt-1 font-serif">
             {juntada.nombre}
           </span>
         </div>
 
         {/* Título gigante y datos de la victoria */}
         <div className="flex flex-col items-center mb-6">
-          <h1 className="text-4xl font-black text-neutral-950 tracking-tight leading-none mb-3">
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#E52320] tracking-tight leading-none mb-3">
             {tituloFestejo}
           </h1>
 
-          <p className="text-base font-semibold text-neutral-800 mb-3">
-            <strong>{nombreGanador}</strong> ganó a las {horaGanador}
+          <p className="text-sm font-medium text-neutral-700 mb-3 lowercase">
+            <strong className="font-bold text-neutral-900">{nombreGanador}</strong> ganó a las {horaGanador}
           </p>
 
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full border-[1.5px] border-neutral-900 bg-white text-xs font-bold text-neutral-900 mb-4 shadow-2xs">
-            Premio: {juntada.premio || 'No lavar los platos'}
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-neutral-300 bg-white text-xs font-medium text-neutral-800 mb-4 shadow-2xs lowercase">
+            premio: {juntada.premio || 'se lleva las sobras del vitel toné'}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-neutral-400 font-medium lowercase">
             <Smartphone className="w-4 h-4 stroke-[1.8]" />
-            <span>Pantalla para mostrarle a la mesa</span>
+            <span>pantalla para mostrarle a la mesa</span>
           </div>
         </div>
 
@@ -121,7 +124,7 @@ function VictoriaContent() {
             fullWidth
             onClick={() => router.push(`/j/${juntada.slug}/acta`)}
           >
-            Ver el acta de la noche
+            ver el resumen de la noche
           </Button>
 
           <Button
@@ -131,7 +134,7 @@ function VictoriaContent() {
             onClick={() => router.push(`/j/${juntada.slug}/acta`)}
           >
             <Share2 className="w-4 h-4 mr-2" />
-            Compartir en historias
+            compartir en historias
           </Button>
         </div>
       </div>

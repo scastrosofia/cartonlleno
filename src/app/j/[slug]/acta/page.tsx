@@ -159,55 +159,78 @@ function ActaContent() {
           >
             <ChevronLeft className="w-6 h-6 stroke-[2.2]" />
           </button>
-          <h1 className="text-lg font-bold text-neutral-900 tracking-tight ml-2">
-            El acta de la noche
+          <h1 className="text-lg font-bold text-neutral-900 tracking-tight ml-2 lowercase">
+            el resumen de la noche
           </h1>
         </header>
 
-        <span className="text-[11px] font-semibold text-neutral-400 text-center block mb-2">
-          Preview historia 9:16
+        <span className="text-[11px] font-semibold text-neutral-400 text-center block mb-2 lowercase">
+          preview historia 9:16
         </span>
 
         {/* Tarjeta de Historia 9:16 (lista para captura y descarga) */}
         <div className="flex justify-center mb-5">
           <div
             ref={storyCardRef}
-            className="w-full max-w-[270px] aspect-[9/16] bg-neutral-100 border-[1.5px] border-neutral-900 rounded-3xl p-5 flex flex-col justify-between text-neutral-900 shadow-sm"
+            className="w-full max-w-[280px] aspect-[9/16] bg-white border-2 border-[#E52320] rounded-3xl p-5 flex flex-col justify-between text-neutral-900 shadow-sm"
           >
             <div>
-              <span className="text-[9px] font-extrabold tracking-widest text-neutral-500 uppercase block mb-1">
-                El acta de la noche
-              </span>
-              <h2 className="text-lg font-black leading-tight text-neutral-950 mb-4">
+              {/* Header de la tarjeta */}
+              <div className="flex flex-col items-center text-center pb-2 border-b border-neutral-100 mb-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-carton.gif"
+                  alt="Cartón lleno"
+                  className="w-36 h-auto max-h-16 object-contain mb-1"
+                />
+                <span className="text-[10px] font-bold text-[#E52320] tracking-wider uppercase">
+                  el resumen de la noche
+                </span>
+              </div>
+
+              <h2 className="font-serif text-lg font-bold leading-tight text-neutral-950 text-center mb-4">
                 {juntada.nombre}
               </h2>
 
-              <div className="mb-4">
-                <span className="text-3xl font-black text-neutral-950 block leading-none">
-                  {stats.clasicosCumplidosCount}/{stats.totalClasicosPool}
+              <div className="p-3 bg-red-50/50 rounded-2xl border border-red-100 text-center mb-3">
+                <span className="text-[10px] font-medium text-neutral-500 uppercase block mb-0.5">
+                  ganó
                 </span>
-                <span className="text-[11px] text-neutral-600 font-medium">
-                  clásicos se cumplieron
+                <span className="font-serif text-xl font-bold text-neutral-950 block leading-tight">
+                  {stats.ganadorNombre}
                 </span>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <p className="leading-snug">
-                  <strong className="font-bold text-neutral-950">Ganó:</strong>{' '}
-                  <span className="font-semibold text-neutral-800">{stats.ganadorNombre}</span>
-                </p>
-                <p className="leading-snug">
-                  <strong className="font-bold text-neutral-950">No pasó:</strong>{' '}
-                  <span className="text-neutral-700">
-                    {stats.clasicoNoPasoTexto}. {stats.remateNoPaso}
-                  </span>
-                </p>
+              <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200 text-center mb-3">
+                <span className="text-2xl font-black text-[#E52320] block leading-none mb-1">
+                  {stats.clasicosCumplidosCount}/{stats.totalClasicosPool}
+                </span>
+                <span className="text-[11px] text-neutral-600 font-medium lowercase">
+                  clásicos cumplidos
+                </span>
+              </div>
+
+              <div className="text-[11px] text-neutral-600 text-center leading-snug px-1">
+                <span className="font-bold text-neutral-900">no pasó:</span>{' '}
+                {stats.clasicoNoPasoTexto}. {stats.remateNoPaso}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-neutral-300 text-center">
-              <span className="text-[10px] font-bold text-neutral-700 tracking-tight">
-                Armá el tuyo en cartonlleno.app
+            {/* Footer con branding Human Friendly */}
+            <div className="pt-3 border-t border-neutral-200 flex flex-col items-center justify-center gap-1.5">
+              <div className="flex items-center gap-1.5 opacity-80">
+                <span className="text-[9px] font-bold tracking-wider text-neutral-500 uppercase">
+                  by
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-human-friendly.png"
+                  alt="Human Friendly"
+                  className="h-3 w-auto object-contain"
+                />
+              </div>
+              <span className="text-[9px] font-medium text-neutral-500 lowercase">
+                armá el tuyo en cartonlleno.app
               </span>
             </div>
           </div>
@@ -219,27 +242,27 @@ function ActaContent() {
             type="button"
             onClick={handleShare}
             disabled={generatingImage}
-            className="min-h-[48px] bg-neutral-950 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 active:scale-98 transition-transform disabled:opacity-50"
+            className="min-h-[48px] bg-[#E52320] text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all shadow-sm disabled:opacity-50 hover:bg-[#d01e1b] lowercase"
           >
             <Share2 className="w-4 h-4" />
-            Compartir
+            <span>compartir</span>
           </button>
 
           <button
             type="button"
             onClick={handleDownload}
             disabled={generatingImage}
-            className="min-h-[48px] bg-white text-neutral-900 border-[1.5px] border-neutral-900 font-bold text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-neutral-50 active:scale-98 transition-transform disabled:opacity-50"
+            className="min-h-[48px] bg-white text-neutral-900 border-[1.5px] border-neutral-300 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 hover:bg-neutral-50 active:scale-98 transition-all disabled:opacity-50 lowercase"
           >
             {downloadSuccess ? (
               <>
                 <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
-                <span className="text-emerald-700">¡Guardado!</span>
+                <span className="text-emerald-700">¡guardado!</span>
               </>
             ) : (
               <>
                 <Download className="w-4 h-4" />
-                Descargar
+                <span>descargar</span>
               </>
             )}
           </button>
@@ -247,18 +270,18 @@ function ActaContent() {
 
         {/* Recuadro CTA de próxima juntada */}
         <div className="p-4 rounded-2xl border-[1.5px] border-dashed border-neutral-300 bg-neutral-50/80 mt-auto">
-          <h3 className="text-xs font-extrabold text-neutral-900 mb-0.5">
-            ¿Tenés otra juntada?
+          <h3 className="text-xs font-extrabold text-neutral-900 mb-0.5 lowercase">
+            ¿tenés otra juntada?
           </h3>
-          <p className="text-[11px] text-neutral-500 mb-2.5">
-            Año Nuevo, amigos, la oficina...
+          <p className="text-[11px] text-neutral-500 mb-2.5 lowercase">
+            año nuevo, amigos, la oficina...
           </p>
           <button
             type="button"
             onClick={handleNuevaJuntada}
-            className="text-xs font-bold text-neutral-950 underline underline-offset-4 flex items-center gap-1 hover:text-black"
+            className="text-xs font-bold text-neutral-950 underline underline-offset-4 flex items-center gap-1 hover:text-[#E52320] lowercase"
           >
-            Armá el bingo de tu próxima juntada
+            armá el bingo de tu próxima juntada
             <ArrowRight className="w-3.5 h-3.5 ml-0.5 stroke-[2.5]" />
           </button>
         </div>

@@ -189,40 +189,50 @@ export default function InvitarPaso3Page() {
   return (
     <MobileContainer>
       <div className="flex flex-col flex-1 pb-4">
-        <StepHeader title="Invitar" step={3} />
+        <StepHeader title="invitar" step={3} />
 
         <div className="flex flex-col flex-1">
           {/* Título */}
-          <h2 className="text-2xl font-extrabold text-neutral-950 tracking-tight leading-tight mb-4">
-            Sumá a los tuyos
+          <h2 className="text-2xl font-extrabold text-neutral-950 tracking-tight leading-tight mb-4 lowercase">
+            sumá a los tuyos
           </h2>
 
           {/* Tarjeta de preview (OG preview style) */}
           <div className="w-full rounded-2xl border-[1.5px] border-neutral-300 bg-white overflow-hidden shadow-2xs mb-4">
-            <div className="w-full p-6 border-b-[1.5px] border-dashed border-neutral-300 bg-neutral-50 flex flex-col items-center justify-center min-h-[140px] text-center">
-              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
-                Cartón lleno, corazón contento
+            <div className="w-full p-6 border-b-[1.5px] border-dashed border-neutral-200 bg-red-50/40 flex flex-col items-center justify-center min-h-[130px] text-center">
+              <span className="text-[11px] font-bold text-[#E52320] uppercase tracking-widest mb-1.5">
+                cartón lleno, corazón contento
               </span>
-              <p className="text-sm font-extrabold text-neutral-900 max-w-[260px]">
-                {juntada.nombre}
+              <p className="font-serif text-lg font-bold text-neutral-900 max-w-[260px] leading-snug">
+                ¡fuiste invitado al bingo de {juntada.nombre}!
               </p>
-              <span className="text-[10px] text-neutral-500 mt-1">
-                Formato {juntada.formato} · {juntada.fecha}
+              <span className="text-[11px] text-neutral-500 mt-1 lowercase">
+                formato {juntada.formato} · {juntada.fecha}
               </span>
             </div>
-            <div className="p-3.5 bg-white">
-              <h3 className="text-xs font-bold text-neutral-950 leading-snug">
-                Te invitaron al bingo de {juntada.nombre}
+            <div className="p-4 bg-white">
+              <h3 className="text-xs font-bold text-neutral-950 leading-snug lowercase">
+                sumá tus clásicos antes del {juntada.fecha}
               </h3>
-              <p className="text-[11px] text-neutral-500 mt-0.5">
-                Sumá tus clásicos antes del {juntada.fecha} · Código: <span className="font-bold text-neutral-900">{juntada.codigo}</span>
+              <p className="text-[11px] text-neutral-500 mt-0.5 lowercase">
+                código: <span className="font-bold text-neutral-900">{juntada.codigo}</span> · {displayShortUrl}
               </p>
             </div>
           </div>
 
+          {/* Botón WhatsApp (Rojo) */}
+          <button
+            type="button"
+            onClick={handleShareWhatsApp}
+            className="w-full min-h-[48px] bg-[#E52320] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-98 transition-all shadow-sm mb-3 hover:bg-[#d01e1b]"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>compartir por WhatsApp</span>
+          </button>
+
           {/* Caja de link corto */}
-          <div className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border-[1.5px] border-neutral-300 bg-white flex items-center justify-between gap-2 mb-3">
-            <span className="text-xs font-semibold text-neutral-800 truncate">
+          <div className="w-full min-h-[46px] px-4 py-2 rounded-2xl border-[1.5px] border-neutral-200 bg-white flex items-center justify-between gap-2 mb-4">
+            <span className="text-xs font-medium text-neutral-700 truncate">
               {displayShortUrl}
             </span>
             <button
@@ -234,7 +244,7 @@ export default function InvitarPaso3Page() {
               {copied ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
-                  <span className="text-[11px] font-bold text-emerald-600">¡Copiado!</span>
+                  <span className="text-[11px] font-bold text-emerald-600">¡copiado!</span>
                 </>
               ) : (
                 <Copy className="w-4 h-4 stroke-[2]" />
@@ -242,18 +252,8 @@ export default function InvitarPaso3Page() {
             </button>
           </div>
 
-          {/* Botón WhatsApp */}
-          <button
-            type="button"
-            onClick={handleShareWhatsApp}
-            className="w-full min-h-[48px] bg-neutral-950 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-98 transition-transform mb-4"
-          >
-            <Share2 className="w-4 h-4" />
-            Compartir por WhatsApp
-          </button>
-
           {/* Jugadores que se sumaron y clásicos */}
-          <div className="p-3.5 rounded-xl border-[1.5px] border-neutral-200 bg-neutral-50 flex items-center justify-between gap-3 mb-4">
+          <div className="p-3.5 rounded-2xl border-[1.5px] border-neutral-200 bg-neutral-50 flex items-center justify-between gap-3 mb-4">
             <div className="flex -space-x-2 overflow-hidden">
               {jugadores.slice(0, 4).map((j, idx) => {
                 const initials = j.nombre
@@ -265,14 +265,14 @@ export default function InvitarPaso3Page() {
                 return (
                   <div
                     key={j.id || idx}
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white bg-neutral-200 text-neutral-900 text-[10px] font-bold"
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white bg-red-100 text-[#E52320] text-[10px] font-bold"
                   >
                     {initials || 'JG'}
                   </div>
                 );
               })}
               {jugadores.length > 4 && (
-                <div className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white bg-neutral-900 text-white text-[10px] font-bold">
+                <div className="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white bg-[#E52320] text-white text-[10px] font-bold">
                   +{jugadores.length - 4}
                 </div>
               )}
@@ -282,49 +282,38 @@ export default function InvitarPaso3Page() {
             </div>
 
             <div className="text-right">
-              <span className="text-xs font-bold text-neutral-900 block">
+              <span className="text-xs font-bold text-neutral-900 block lowercase">
                 {jugadores.length} {jugadores.length === 1 ? 'se sumó' : 'se sumaron'}
               </span>
-              <span className="text-[10px] text-neutral-500">
+              <span className="text-[10px] text-neutral-500 lowercase">
                 {clasicos.length} clásicos cargados
               </span>
             </div>
           </div>
 
-          {/* Botón de jugador sin celu (prepara fase 3) */}
+          {/* Botón de jugador sin celu */}
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="w-full min-h-[46px] rounded-xl border-[1.5px] border-dashed border-neutral-400 bg-white text-xs font-bold text-neutral-800 flex items-center justify-center gap-2 hover:border-neutral-700 active:bg-neutral-50 mb-3"
+            className="w-full min-h-[46px] rounded-2xl border-[1.5px] border-neutral-300 bg-white text-xs font-bold text-neutral-800 flex items-center justify-center gap-2 hover:border-neutral-500 active:bg-neutral-50 mb-3"
           >
-            <Plus className="w-4 h-4 stroke-[2]" />
-            Agregar jugador sin celu
+            <Plus className="w-4 h-4 text-[#E52320] stroke-[2.5]" />
+            <span>+ agregar jugador sin celu</span>
           </button>
-
-          {/* Indicación de anonimato */}
-          <div className="flex items-center justify-between px-1 mb-6">
-            <span className="text-xs text-neutral-600 font-medium">
-              Los clásicos son anónimos
-            </span>
-            <div className="w-5 h-5 bg-neutral-900 rounded-md flex items-center justify-center text-white">
-              <Check className="w-3.5 h-3.5 stroke-[3]" />
-            </div>
-          </div>
         </div>
 
-        {/* Botón Repartir cartones */}
+        {/* Botón Repartir cartones (Rojo) */}
         <div className="mt-auto pt-2 flex flex-col items-center">
           <Button
             size="lg"
-            variant="outline"
             fullWidth
             onClick={handleRepartir}
             disabled={repartiendo}
           >
-            {repartiendo ? 'Repartiendo...' : 'Repartir cartones'}
+            {repartiendo ? 'repartiendo...' : 'repartir cartones'}
           </Button>
-          <span className="text-[11px] text-neutral-500 mt-2 text-center">
-            Cada jugador recibe un cartón distinto
+          <span className="text-[11px] text-neutral-500 mt-2 text-center lowercase">
+            cada jugador recibe un cartón distinto
           </span>
         </div>
       </div>

@@ -110,21 +110,24 @@ function renderCartonA4Completo(
   const marginX = 16;
   let cursorY = 18;
 
-  // Encabezado superior
+  // Encabezado superior con rojo festivo
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(50, 50, 50);
-  doc.text('CARTÓN LLENO, CORAZÓN CONTENTO', marginX, cursorY);
+  doc.setFontSize(10);
+  doc.setTextColor(229, 35, 32); // #E52320
+  doc.text('CARTÓN LLENO, ¡CORAZÓN CONTENTO!', marginX, cursorY);
 
   const numStr = `CARTÓN N° ${String(carton.numero).padStart(2, '0')}`;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(70, 70, 70);
   doc.text(numStr, width - marginX, cursorY, { align: 'right' });
 
   cursorY += 12;
 
   // Título de la juntada
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('times', 'bold');
   doc.setFontSize(22);
-  doc.setTextColor(10, 10, 10);
+  doc.setTextColor(15, 15, 15);
   doc.text(juntada.nombre, marginX, cursorY);
 
   cursorY += 7;
@@ -132,7 +135,7 @@ function renderCartonA4Completo(
   // Fecha y premio
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.setTextColor(80, 80, 80);
+  doc.setTextColor(100, 100, 100);
   const infoTxt = `${juntada.fecha} · Premio: ${juntada.premio || 'No lavar los platos'}`;
   doc.text(infoTxt, marginX, cursorY);
 

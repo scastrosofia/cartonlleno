@@ -277,44 +277,44 @@ function MiCartonEnVivoContent() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-base font-extrabold text-neutral-950 leading-tight">
+              <h1 className="font-serif text-lg font-bold text-neutral-950 leading-tight">
                 {juntada.nombre}
               </h1>
-              <p className="text-xs text-neutral-500 font-medium">
-                Jugando · {jugadores.length} jugadores
+              <p className="text-xs text-neutral-500 font-medium lowercase">
+                jugando · {jugadores.length} jugadores
               </p>
             </div>
             <div
               title={carton.jugadorNombre}
-              className="w-10 h-10 rounded-full border-[1.5px] border-neutral-900 bg-neutral-100 flex items-center justify-center font-bold text-xs text-neutral-900 shadow-2xs"
+              className="w-10 h-10 rounded-full border-[1.5px] border-[#E52320] bg-red-50 flex items-center justify-center font-bold text-xs text-[#E52320] shadow-2xs"
             >
               {initials}
             </div>
           </div>
 
-          {/* Pestañas de cartones (Mi cartón / Cartón de La Abu) */}
-          <div className="flex gap-1.5 p-1 bg-neutral-100 rounded-xl mb-3 border border-neutral-200 overflow-x-auto">
+          {/* Pestañas de cartones (mi cartón / cartón de la abu) */}
+          <div className="flex gap-1.5 p-1 bg-neutral-100 rounded-2xl mb-3 border border-neutral-200 overflow-x-auto">
             {misCartones.map((c, idx) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setActiveCartonIdx(idx)}
-                className={`flex-1 min-w-[100px] py-2 text-xs font-bold rounded-lg transition-all truncate px-2.5 ${
+                className={`flex-1 min-w-[100px] py-2 text-xs font-bold rounded-xl transition-all truncate px-2.5 lowercase ${
                   activeCartonIdx === idx
                     ? 'bg-white text-neutral-950 shadow-2xs border border-neutral-300'
                     : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
-                {idx === 0 ? 'Mi cartón' : `Cartón de ${c.jugadorNombre}`}
+                {idx === 0 ? 'mi cartón' : `cartón de ${c.jugadorNombre}`}
               </button>
             ))}
           </div>
 
           {/* Notificación de ganador en vivo (si alguien cantó línea o lleno) */}
           {notifVictoria && (
-            <div className="w-full bg-neutral-900 text-white rounded-xl p-3 flex items-center justify-between gap-2.5 mb-3 animate-bounce">
+            <div className="w-full bg-[#E52320] text-white rounded-2xl p-3.5 flex items-center justify-between gap-2.5 mb-3 shadow-md animate-bounce">
               <div className="flex items-center gap-2.5 min-w-0">
-                <PartyPopper className="w-5 h-5 text-yellow-400 shrink-0" />
+                <PartyPopper className="w-5 h-5 text-yellow-300 shrink-0" />
                 <div className="text-xs leading-tight truncate">
                   <span className="font-bold">{notifVictoria.nombre}</span> cantó{' '}
                   <span className="font-extrabold underline">{notifVictoria.tipo}</span> a las{' '}
@@ -324,9 +324,9 @@ function MiCartonEnVivoContent() {
               <button
                 type="button"
                 onClick={() => router.push(`/j/${juntada.slug}/victoria`)}
-                className="shrink-0 bg-white text-neutral-900 text-[11px] font-bold px-2.5 py-1 rounded-lg active:scale-95 transition-transform"
+                className="shrink-0 bg-white text-[#E52320] text-[11px] font-bold px-3 py-1.5 rounded-xl active:scale-95 transition-transform"
               >
-                Ver festejo
+                ver festejo
               </button>
             </div>
           )}
@@ -335,17 +335,17 @@ function MiCartonEnVivoContent() {
           {alertaSocial && (
             <SocialAlert
               mensaje={`${alertaSocial.personas} personas marcaron: ${alertaSocial.texto}`}
-              botonTexto={alertaSocial.matches.length > 1 ? `En los ${alertaSocial.matches.length}` : 'Marcar'}
+              botonTexto={alertaSocial.matches.length > 1 ? `en los ${alertaSocial.matches.length}` : 'marcar'}
               onAction={handleMarcarSocial}
             />
           )}
 
           {/* Si no hay alerta social natural, mostramos sutilmente el estado */}
           {!alertaSocial && !notifVictoria && (
-            <div className="text-[11px] text-neutral-400 font-medium text-center mb-2">
+            <div className="text-[11px] text-neutral-400 font-medium text-center mb-2 lowercase">
               {misCartones.length > 1
-                ? `Llevás ${misCartones.length} cartones en este celu. Podés alternar en las pestañas arriba.`
-                : 'Tocá cualquier casillero cuando ocurra en la juntada'}
+                ? `llevás ${misCartones.length} cartones en este celu. podés alternar en las pestañas arriba.`
+                : 'tocá cualquier casillero cuando ocurra en la juntada'}
             </div>
           )}
         </div>
@@ -368,10 +368,10 @@ function MiCartonEnVivoContent() {
             leftLabel={`${cantidadMarcados} de ${totalCasilleros} marcados`}
             rightLabel={
               tieneLleno
-                ? '¡Cartón completado!'
+                ? '¡cartón completado!'
                 : tieneLinea
-                ? '¡Línea conseguida!'
-                : `Te falta ${faltantesLinea} para línea`
+                ? '¡línea conseguida!'
+                : `te falta ${faltantesLinea} para línea`
             }
           />
 
@@ -379,22 +379,25 @@ function MiCartonEnVivoContent() {
             <Button
               size="lg"
               fullWidth
-              className="bg-neutral-950 text-white shadow-lg animate-pulse"
+              className="bg-[#E52320] text-white shadow-lg animate-pulse"
               onClick={handleCantarLleno}
             >
-              <Trophy className="w-5 h-5 mr-2 text-yellow-400" />
+              <Trophy className="w-5 h-5 mr-2 text-yellow-300" />
               ¡CARTÓN LLENO!
             </Button>
           ) : (
-            <Button
-              size="lg"
-              variant={tieneLinea ? 'primary' : 'outline'}
-              fullWidth
+            <button
+              type="button"
               disabled={!tieneLinea}
               onClick={handleCantarLinea}
+              className={`w-full min-h-[50px] rounded-2xl font-black text-sm tracking-wide uppercase transition-all shadow-xs flex items-center justify-center ${
+                tieneLinea
+                  ? 'bg-[#E52320] text-white animate-pulse shadow-md'
+                  : 'bg-white border-2 border-[#E52320] text-[#E52320] hover:bg-red-50/50'
+              }`}
             >
               {tieneLinea ? '🎉 ¡CANTAR LÍNEA!' : '¡LÍNEA!'}
-            </Button>
+            </button>
           )}
 
           <button
@@ -402,9 +405,9 @@ function MiCartonEnVivoContent() {
             onClick={() => {
               alert(`En la mesa están jugando ${jugadores.length} personas: ${jugadores.map((j) => j.nombre).join(', ')}.`);
             }}
-            className="text-center text-xs font-bold text-neutral-800 underline underline-offset-4 py-1 hover:text-black"
+            className="text-center text-xs font-semibold text-neutral-600 underline underline-offset-4 py-1 hover:text-black lowercase"
           >
-            Ver ranking de la mesa
+            ver ranking de la mesa
           </button>
         </div>
       </div>

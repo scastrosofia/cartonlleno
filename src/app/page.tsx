@@ -1,116 +1,131 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { MobileContainer } from '@/components/layout/MobileContainer';
 import { Button } from '@/components/ui/Button';
-import { Check } from 'lucide-react';
 
 export default function HomePage() {
-  // Animación del mini cartón interactivo de presentación
-  const [markedCells, setMarkedCells] = useState<number[]>([0, 3]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setMarkedCells((prev) => {
-        if (prev.length >= 4) return [0];
-        const next = [0, 1, 2, 3].find((i) => !prev.includes(i));
-        return next !== undefined ? [...prev, next] : [0];
-      });
-    }, 1800);
-    return () => clearInterval(timer);
-  }, []);
-
-  const miniCasilleros = [
-    'Se corta la luz',
-    'Sobra vitel toné',
-    '¿Y el novio?',
-    'La abuela durmió',
-  ];
-
   return (
-    <MobileContainer>
-      <div className="flex flex-col flex-1 justify-between">
-        {/* Encabezado de marca */}
-        <div>
-          <span className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase">
-            Human Friendly presenta
-          </span>
+    <MobileContainer className="p-2 sm:p-3 bg-neutral-100">
+      {/* Marco de doble línea roja exterior e interior idéntico al wireframe */}
+      <div className="w-full h-full border-[2.5px] border-[#E52320] rounded-3xl p-1.5 flex flex-col flex-1">
+        <div className="w-full h-full border-[1.5px] border-[#E52320] rounded-2xl p-4 sm:p-5 flex flex-col justify-between flex-1 bg-white">
+          
+          {/* Parte Superior: Gif animado / Logo ilustrado */}
+          <div className="flex flex-col items-center pt-2">
+            <div className="w-full max-w-[310px] aspect-[4/3] relative flex items-center justify-center mb-3">
+              <Image
+                src="/logo-carton.gif"
+                alt="Cartón lleno, corazón contento"
+                width={360}
+                height={270}
+                className="w-full h-auto object-contain select-none"
+                priority
+                unoptimized
+              />
+            </div>
 
-          {/* Ilustración interactiva / mini cartón */}
-          <div className="w-full mt-3 mb-6 p-4 rounded-2xl border-[1.5px] border-dashed border-neutral-300 bg-neutral-50/70 flex flex-col items-center justify-center min-h-[190px]">
-            <div className="grid grid-cols-2 gap-2 w-full max-w-[240px]">
-              {miniCasilleros.map((texto, idx) => {
-                const isMarked = markedCells.includes(idx);
-                return (
-                  <div
-                    key={idx}
-                    className={`p-2.5 rounded-xl border-[1.5px] text-center flex flex-col items-center justify-center min-h-[64px] transition-all duration-300 ${
-                      isMarked
-                        ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs scale-102'
-                        : 'bg-white text-neutral-800 border-neutral-300'
-                    }`}
+            {/* Pregunta principal */}
+            <h1 className="text-xl sm:text-[22px] font-extrabold text-neutral-950 tracking-tight text-center leading-tight mb-8">
+              ¿qué tanto conocés a los tuyos?
+            </h1>
+
+            {/* Los 3 pasos con corazones rojos */}
+            <div className="grid grid-cols-3 gap-2 w-full mb-8">
+              {/* Paso 1 */}
+              <div className="flex flex-col items-center text-center">
+                <div className="relative w-11 h-11 flex items-center justify-center mb-2.5">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="#E52320"
+                    className="w-11 h-11 drop-shadow-2xs"
                   >
-                    {isMarked && (
-                      <Check className="w-3.5 h-3.5 text-white stroke-[3] mb-0.5" />
-                    )}
-                    <span className="text-[11px] font-semibold leading-tight">
-                      {texto}
-                    </span>
-                  </div>
-                );
-              })}
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-white font-extrabold text-sm pb-1">
+                    1
+                  </span>
+                </div>
+                <span className="text-[12px] font-bold text-neutral-950 leading-tight">
+                  cargá lo que pasa siempre
+                </span>
+              </div>
+
+              {/* Paso 2 */}
+              <div className="flex flex-col items-center text-center">
+                <div className="relative w-11 h-11 flex items-center justify-center mb-2.5">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="#E52320"
+                    className="w-11 h-11 drop-shadow-2xs"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-white font-extrabold text-sm pb-1">
+                    2
+                  </span>
+                </div>
+                <span className="text-[12px] font-bold text-neutral-950 leading-tight">
+                  compartí el link
+                </span>
+              </div>
+
+              {/* Paso 3 */}
+              <div className="flex flex-col items-center text-center">
+                <div className="relative w-11 h-11 flex items-center justify-center mb-2.5">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="#E52320"
+                    className="w-11 h-11 drop-shadow-2xs"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-white font-extrabold text-sm pb-1">
+                    3
+                  </span>
+                </div>
+                <span className="text-[12px] font-bold text-neutral-950 leading-tight">
+                  jugá con los tuyos
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] text-neutral-400 mt-2.5 font-medium">
-              El bingo de tu propia gente
-            </span>
           </div>
 
-          {/* Título principal */}
-          <h1 className="text-3xl font-extrabold text-neutral-950 tracking-tight leading-[1.1] mb-2.5">
-            Cartón lleno,<br />corazón contento
-          </h1>
+          {/* Botones de acción y pie */}
+          <div className="flex flex-col gap-4 mt-auto">
+            <Link href="/nueva/paso-1" className="w-full">
+              <button
+                type="button"
+                className="w-full min-h-[52px] bg-[#E52320] text-white hover:bg-[#CC1E1B] active:scale-98 font-bold text-[15px] rounded-full transition-all shadow-xs flex items-center justify-center select-none"
+              >
+                quiero armar mi bingo
+              </button>
+            </Link>
 
-          <p className="text-neutral-600 text-sm leading-relaxed mb-6">
-            Armá el bingo de las cosas que pasan siempre en tus juntadas de fin de año.
-          </p>
+            <Link
+              href="/unirse"
+              className="text-center text-sm font-bold text-neutral-950 pb-0.5 border-b-[1.5px] border-[#E52320] w-fit mx-auto hover:text-black transition-colors"
+            >
+              me invitaron a una juntada
+            </Link>
 
-          {/* 3 pasos */}
-          <div className="grid grid-cols-3 gap-2.5 mb-8">
-            <div className="p-3 rounded-xl border-[1.5px] border-neutral-200 bg-white flex flex-col justify-between min-h-[90px]">
-              <span className="text-lg font-black text-neutral-950">1</span>
-              <span className="text-[11px] font-semibold text-neutral-700 leading-tight">
-                Cargá los clásicos
+            {/* Footer con logo Human Friendly */}
+            <div className="pt-8 pb-1 flex items-end gap-1.5">
+              <span className="text-xs font-bold text-neutral-900 leading-none pb-0.5">
+                by
               </span>
-            </div>
-            <div className="p-3 rounded-xl border-[1.5px] border-neutral-200 bg-white flex flex-col justify-between min-h-[90px]">
-              <span className="text-lg font-black text-neutral-950">2</span>
-              <span className="text-[11px] font-semibold text-neutral-700 leading-tight">
-                Compartí el link
-              </span>
-            </div>
-            <div className="p-3 rounded-xl border-[1.5px] border-neutral-200 bg-white flex flex-col justify-between min-h-[90px]">
-              <span className="text-lg font-black text-neutral-950">3</span>
-              <span className="text-[11px] font-semibold text-neutral-700 leading-tight">
-                Marcá en la juntada
-              </span>
+              <Image
+                src="/logo-human-friendly.png"
+                alt="Human Friendly"
+                width={120}
+                height={26}
+                className="h-[22px] w-auto object-contain"
+              />
             </div>
           </div>
-        </div>
 
-        {/* Botones de acción */}
-        <div className="flex flex-col gap-3.5 mt-auto pt-4">
-          <Link href="/nueva/paso-1" className="w-full">
-            <Button size="lg" fullWidth>
-              Armar mi bingo
-            </Button>
-          </Link>
-          <Link
-            href="/unirse"
-            className="text-center text-sm font-bold text-neutral-900 underline underline-offset-4 py-2 hover:text-black"
-          >
-            Me invitaron a una juntada
-          </Link>
         </div>
       </div>
     </MobileContainer>
