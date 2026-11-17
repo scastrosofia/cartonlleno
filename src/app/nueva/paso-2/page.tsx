@@ -39,15 +39,17 @@ export default function CargarClasicosPaso2Page() {
 
       const savedClasicos = localStorage.getItem('carton_lleno_draft_clasicos');
       if (savedClasicos) {
-        setClasicos(JSON.parse(savedClasicos));
+        try {
+          const parsedClasicos = JSON.parse(savedClasicos);
+          const filtered = Array.isArray(parsedClasicos)
+            ? parsedClasicos.filter((c: ClassicItem) => !c.id?.startsWith('init_'))
+            : [];
+          setClasicos(filtered);
+        } catch {
+          setClasicos([]);
+        }
       } else {
-        // Precargar 4 sugerencias según el wireframe
-        const banco = getBancoCompletoParaTipo(parsed.tipo || 'familia');
-        const iniciales = banco.slice(0, 4).map((b) => ({
-          id: `init_${b.id}`,
-          texto: b.texto,
-        }));
-        setClasicos(iniciales);
+        setClasicos([]);
       }
     } catch {
       router.replace('/nueva/paso-1');
@@ -145,7 +147,7 @@ export default function CargarClasicosPaso2Page() {
           {/* Lista de clásicos cargados */}
           <div className="flex flex-col gap-2 mb-6 max-h-[220px] overflow-y-auto pr-0.5">
             {clasicos.length === 0 ? (
-              <div className="p-4 rounded-2xl border-[1.5px] border-dashed border-neutral-300 text-center text-xs text-neutral-500">
+              <div className="py-7 px-5 rounded-3xl border-[1.5px] border-dashed border-neutral-300 text-center text-xs sm:text-sm text-neutral-500 leading-relaxed">
                 todavía no cargaste ningún clásico. ¡agregá uno o elegí de abajo!
               </div>
             ) : (

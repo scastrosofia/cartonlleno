@@ -55,6 +55,7 @@ export default function CrearJuntadaPaso1Page() {
 
     localStorage.removeItem('carton_lleno_active_id');
     localStorage.removeItem('carton_lleno_active_slug');
+    localStorage.removeItem('carton_lleno_draft_clasicos');
     localStorage.setItem('carton_lleno_draft', JSON.stringify(draft));
     router.push('/nueva/paso-2');
   };
