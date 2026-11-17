@@ -112,16 +112,17 @@ export default function HomePage() {
             </Link>
 
             {/* Footer con logo Human Friendly */}
-            <div className="pt-8 pb-1 flex items-end gap-1.5">
-              <span className="text-xs font-bold text-neutral-900 leading-none pb-0.5">
+            <div className="pt-6 pb-1 flex flex-col items-start gap-1">
+              <span className="text-[13px] sm:text-[14px] font-bold text-neutral-950 leading-none">
                 by
               </span>
               <Image
                 src="/logo-human-friendly.png"
                 alt="Human Friendly"
-                width={120}
-                height={26}
-                className="h-[22px] w-auto object-contain"
+                width={180}
+                height={40}
+                className="h-[32px] sm:h-[36px] w-auto object-contain"
+                priority
               />
             </div>
           </div>
